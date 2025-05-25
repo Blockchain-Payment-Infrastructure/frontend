@@ -1,0 +1,109 @@
+<div class="center-content">
+  <mat-card class="example-card" appearance="outlined">
+    <mat-card-header>
+      <div mat-card-avatar class="example-header-image"></div>
+      <mat-card-title>Absolute Finance Interface</mat-card-title>
+      <mat-card-subtitle>Dog Breed</mat-card-subtitle>
+    </mat-card-header>
+    <img mat-card-image src="https://material.angular.io/assets/img/examples/shiba2.jpg" alt="Photo of a Shiba Inu">
+    <mat-card-content>
+      <mat-tab-group>
+        <mat-tab label="Login">
+          <div>
+            <mat-form-field class="example-form-field">
+              <mat-label>Username</mat-label>
+              <input matInput type="text" [(ngModel)]="username">
+              @if (username) {
+              <button matSuffix mat-icon-button aria-label="Clear" (click)="username=''">
+                <mat-icon>close</mat-icon>
+              </button>
+              }
+            </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field class="example-form-field">
+              <mat-label>Password</mat-label>
+              <input matInput type="password" [(ngModel)]="password">
+              @if (password) {
+              <button matSuffix mat-icon-button aria-label="Clear" (click)="password=''">
+                <mat-icon>close</mat-icon>
+              </button>
+              }
+            </mat-form-field>
+          </div>
+          @if (!username) {
+          <button mat-button disabled>Login</button>
+          }
+          @else if (!password) {
+          <button mat-button disabled>Login</button>
+          }
+          @else {
+          <button mat-button>Login</button>
+          }
+        </mat-tab>
+        <mat-tab label="Register">
+          <div>
+            <mat-form-field class="example-form-field">
+              <mat-label>Phone Number</mat-label>
+              <input matInput type="tel" [(ngModel)]="phno">
+              @if (phno) {
+              <button matSuffix mat-icon-button aria-label="Clear" (click)="phno=''">
+                <mat-icon>close</mat-icon>
+              </button>
+              }
+            </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field class="example-form-field">
+              <mat-label>Username</mat-label>
+              <input matInput type="text" [(ngModel)]="username2">
+              @if (username2) {
+              <button matSuffix mat-icon-button aria-label="Clear" (click)="username2=''">
+                <mat-icon>close</mat-icon>
+              </button>
+              }
+            </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field class="example-form-field">
+              <mat-label>Email</mat-label>
+              <input matInput type="text" [(ngModel)]="email">
+              @if (email) {
+              <button matSuffix mat-icon-button aria-label="Clear" (click)="email=''">
+                <mat-icon>close</mat-icon>
+              </button>
+              }
+            </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field class="example-form-field">
+              <mat-label>Password</mat-label>
+              <input matInput type="password" [(ngModel)]="password2">
+              @if (password2) {
+              <button matSuffix mat-icon-button aria-label="Clear" (click)="password2=''">
+                <mat-icon>close</mat-icon>
+              </button>
+              }
+            </mat-form-field>
+          </div>
+          @if (!username2) {
+          <button mat-button disabled>Register</button>
+          }
+          @else if (!phno) {
+          <button mat-button disabled>Register</button>
+          }
+          @else if (!email) {
+          <button mat-button disabled>Register</button>
+          }
+          @else if (!password2) {
+          <button mat-button disabled>Register</button>
+          }
+          @else {
+          <button mat-button>Register</button>
+          }
+        </mat-tab>
+      </mat-tab-group>
+
+    </mat-card-content>
+  </mat-card>
+</div>
