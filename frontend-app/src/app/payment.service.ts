@@ -32,7 +32,6 @@ interface PaymentTransaction {
 export class PaymentService {
 
   // Finalized Live Backend URL
-  private readonly API_BASE_URL = 'http://localhost:8080';
 
   constructor(private http: HttpClient) { }
 
@@ -40,7 +39,7 @@ export class PaymentService {
    * Links to the backend endpoint: POST /login (Assumed)
    */
   userLogin(payload: AuthPayload): Observable<AuthResponse> {
-    const endpoint = `${this.API_BASE_URL}/auth/login`;
+    const endpoint = "api/auth/login";
     console.log(`Calling backend login endpoint: ${endpoint}`);
     return this.http.post<AuthResponse>(endpoint, payload);
   }
@@ -49,7 +48,7 @@ export class PaymentService {
    * Links to the backend endpoint: POST /register (Assumed)
    */
   userRegister(payload: AuthPayload): Observable<AuthResponse> {
-    const endpoint = `${this.API_BASE_URL}/auth/signup`;
+    const endpoint = "api/auth/signup";
     console.log(`Calling backend register endpoint: ${endpoint}`);
     return this.http.post<AuthResponse>(endpoint, payload);
   }
@@ -58,7 +57,7 @@ export class PaymentService {
    * Links to the backend endpoint: GET /payments/tx/{hash}
    */
   getTransactionDetails(transactionHash: string): Observable<PaymentTransaction> {
-    const endpoint = `${this.API_BASE_URL}/payments/tx/${transactionHash}`;
+    const endpoint = `api/payments/tx/${transactionHash}`;
     console.log(`Calling backend endpoint: ${endpoint}`);
     return this.http.get<PaymentTransaction>(endpoint);
   }
