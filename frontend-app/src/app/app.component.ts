@@ -1,6 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { CommonModule } from '@angular/common'; 
+ 
 import { FormsModule } from '@angular/forms'; 
 
 // --- MATERIAL IMPORTS ---
@@ -35,13 +35,9 @@ type TransactionDetails = { txHash: string, status: string, amount: number } | n
   selector: 'app-root',
   standalone: true,
   imports: [
-    // ANGULAR CORE MODULES
     RouterOutlet,
-    FormsModule, 
-    CommonModule,
-    HttpClientModule, 
-    
-    // MATERIAL MODULES (Complete List)
+    FormsModule,
+    HttpClientModule,
     MatCardModule,
     MatTabsModule,
     MatInputModule,
@@ -52,7 +48,7 @@ type TransactionDetails = { txHash: string, status: string, amount: number } | n
     MatRadioModule,
     MatSelectModule,
     MatTableModule
-  ],
+],
   providers: [PaymentService],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
