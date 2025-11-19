@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Frontend App</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-image: url('https://pictures.altai-travel.com/1920x1040/mount-everest-aerial-view-himalayas-istock-3745.jpg'); /* 👈 your background */
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-position: center;
+    }
+
+    .textbox-container {
+      position: absolute;
+      top: 60%;               /* middle vertically */
+      left: 40px;             /* space from left */
+      transform: translateY(-50%); /* exact vertical centering */
+    }
+
+    .textbox-container textarea {
+      width: 450px;           /* make it wider */
+      height: 280px;          /* enough for ~5 lines */
+      font-size: 28px;        /* large font */
+      font-weight: bold;      /* bold text */
+      padding: 12px 16px;
+      border: 0px solid white;
+      border-radius: 0px;
+      background-color: transparent; /* transparent background */
+      color: black;           /* text color */
+      outline: none;
+      resize: none;           /* prevent resizing (optional) */
+      box-sizing: border-box;
+    }
+
+    .textbox-container textarea::placeholder {
+      color: rgba(0, 0, 0, 0.8); /* lighter white for placeholder */
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body class="mat-typography">
+  <!-- Transparent Textarea -->
+  <div class="textbox-container">
+    <textarea placeholder="Begin your finance journey with Blockchain Payment today. 100% transparent and 100% secure..."></textarea>
+  </div>
+
+  <!-- Angular app -->
+  <app-root></app-root>
+</body>
+
+</html>

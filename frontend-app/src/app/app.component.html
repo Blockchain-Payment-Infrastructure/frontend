@@ -1,0 +1,388 @@
+<!-- LOGIN + REGISTER PAGE -->
+@if (currentPage === 'login') {
+  <!-- Top Toolbar -->
+  <mat-toolbar color="primary" style="display: flex; justify-content: center; font-size: 20px;">
+    Absolute Dogshit
+  </mat-toolbar>
+
+  <!-- Center the content vertically and push it to the right -->
+  <div style="display: flex; justify-content: flex-end; align-items: center; height: 100vh;">
+    <div class="center-content" style="width: 40%; padding-right: 20px;">
+      <mat-card class="example-card" appearance="outlined">
+        <mat-card-header>
+          <img mat-card-avatar src="https://cdn-icons-png.flaticon.com/512/3712/3712419.png" alt="New Avatar Image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" />
+          <mat-card-title>Login/Signup</mat-card-title>
+          <mat-card-subtitle>Enter details to access the Dashboard</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+          <mat-tab-group #tabGroup>
+
+            <!-- LOGIN TAB -->
+            <mat-tab label="Login">
+              <div>
+                <mat-form-field class="example-form-field">
+                  <mat-label>Email</mat-label>
+                  <input matInput type="text" [(ngModel)]="email">
+                  @if (email) {
+                  <button matSuffix mat-icon-button aria-label="Clear" (click)="email=''">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                  }
+                </mat-form-field>
+              </div>
+              <div>
+                <mat-form-field class="example-form-field">
+                  <mat-label>Password</mat-label>
+                  <input matInput type="password" [(ngModel)]="password">
+                  @if (password) {
+                  <button matSuffix mat-icon-button aria-label="Clear" (click)="password=''">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                  }
+                </mat-form-field>
+              </div>
+              @if (!email || !password) {
+              <button mat-button disabled>Login</button>
+              }
+              @else {
+              <!-- MODIFIED LOGIN BUTTON -->
+              <button mat-button (click)="login()" [disabled]="isAuthenticating">
+                {{ isAuthenticating ? 'Logging In...' : 'Login' }}
+              </button>
+              }
+            </mat-tab>
+
+            <!-- REGISTER TAB -->
+            <mat-tab label="Sign-up">
+              <div>
+                <mat-form-field class="example-form-field">
+                  <mat-label>Username</mat-label>
+                  <input matInput type="text" [(ngModel)]="username2">
+                  @if (username2) {
+                  <button matSuffix mat-icon-button aria-label="Clear" (click)="username2=''">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                  }
+                </mat-form-field>
+              </div>
+              <div>
+                <mat-form-field class="example-form-field">
+                  <mat-label>Email</mat-label>
+                  <input matInput type="text" [(ngModel)]="email">
+                  @if (email) {
+                  <button matSuffix mat-icon-button aria-label="Clear" (click)="email=''">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                  }
+                </mat-form-field>
+              </div>
+                            <div>
+                <mat-form-field class="example-form-field">
+                  <mat-label>Ph. No.</mat-label>
+                  <input matInput type="text" [(ngModel)]="phone_number">
+                  @if (email) {
+                  <button matSuffix mat-icon-button aria-label="Clear" (click)="email=''">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                  }
+                </mat-form-field>
+              </div>
+              <div>
+                <mat-form-field class="example-form-field">
+                  <mat-label>Password</mat-label>
+                  <input matInput type="password" [(ngModel)]="password">
+                  @if (password) {
+                  <button matSuffix mat-icon-button aria-label="Clear" (click)="password=''">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                  }
+                </mat-form-field>
+              </div>
+              @if (!username2 || !email || !password) {
+              <button mat-button disabled>Register</button>
+              }
+              @else {
+              <!-- MODIFIED REGISTER BUTTON -->
+              <button mat-button (click)="register()" [disabled]="isAuthenticating">
+                 {{ isAuthenticating ? 'Registering...' : 'Register' }}
+              </button>
+              }
+            </mat-tab>
+          </mat-tab-group>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+}
+
+<!-- DASHBOARD PAGE -->
+@else if (currentPage === 'dashboard') {
+<div style="display:flex; flex-direction:column; height:100vh;">
+
+  <!-- TOP APP BAR -->
+<mat-toolbar color="primary" style="display: flex;">
+  <div style="font-size: 18px; font-weight: 600;">
+    Welcome {{ username || 'User' }}
+  </div>
+  <div style="margin-left: auto; display: flex; gap: 10px;">
+  <button mat-button color="accent" (click)="manageAccount()">
+    Manage
+  </button>
+  <button mat-button color="accent" (click)="currentPage='login'">
+    Logout
+  </button>
+  </div>
+</mat-toolbar>
+
+  <!-- MAIN CONTENT -->
+  <div style="flex:1; padding:20px; display:flex; flex-direction:column; gap:20px;">
+
+    <!-- QUICK ACTIONS ON TOP -->
+<mat-card style="margin: 20px; padding: 20px; text-align: center; background-color:#FFF5E1;">
+  <mat-card-title style="font-size: 24px;">Quick Actions</mat-card-title>
+
+  <mat-card-content style="display: flex; justify-content: space-around; margin-top: 20px;">
+    <button mat-raised-button color="primary"
+            style="min-width: 140px; font-size: 18px; padding: 15px 0;"
+            (click)="toggleAction('send')">
+      Send
+    </button>
+
+    <button mat-raised-button color="accent"
+            style="min-width: 140px; font-size: 18px; padding: 15px 0;"
+            (click)="toggleAction('receive')">
+      Receive
+    </button>
+
+    <button mat-raised-button color="warn"
+            style="min-width: 140px; font-size: 18px; padding: 15px 0;"
+            (click)="toggleAction('exchange')">
+      Exchange
+    </button>
+  </mat-card-content>
+</mat-card>
+
+
+<!-- User List -->
+@if (selectedAction === 'send' || selectedAction === 'receive') {
+  <div style="margin: 20px;">
+    <mat-card style="background-color: #E6E6FA;">
+      <mat-card-title style="text-align: center; display: block;">
+        {{ selectedAction === 'send' ? 'Select User to Send To' : 'Select User to Receive From' }}
+      </mat-card-title>
+      <mat-card-content style="display: flex; flex-direction: column; align-items: center;">
+        <table style="width: 100%; border-collapse: collapse; text-align: center;">
+          @for (user of users; track user) {
+            <tr style="border-bottom: 1px solid #ddd; cursor: pointer;">
+              <td style="padding: 10px;">
+                <mat-radio-button
+                  name="selectedUser"
+                  [value]="user"
+                  (change)="onUserSelected(user)"
+                ></mat-radio-button>
+              </td>
+              <td style="padding: 10px; font-weight: bold;">{{ user.name }}</td>
+              <td style="padding: 10px; color: gray;">{{ user.contact }}</td>
+            </tr>
+          }
+        </table>
+      </mat-card-content>
+    </mat-card>
+  </div>
+}
+
+@if (selectedAction === 'exchange') {
+  <div style="margin: 20px;">
+    <mat-card style="background-color: #E6E6FA;">
+      <mat-card-title style="text-align: center;">Currency Exchange</mat-card-title>
+      <mat-card-content style="display: flex; flex-direction: column; gap: 15px;">
+
+        <div style="display: flex; gap: 15px; justify-content: center;">
+          <mat-form-field appearance="outline" style="flex: 1;">
+            <mat-label>From</mat-label>
+            <mat-select [(value)]="exchangeFrom">
+              <!-- FIX: Changed *ngFor to @for -->
+              @for (currency of currencies; track currency) {
+                <mat-option [value]="currency">
+                  {{ currency }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" style="flex: 1;">
+            <mat-label>To</mat-label>
+            <mat-select [(value)]="exchangeTo">
+              <!-- FIX: Changed *ngFor to @for -->
+              @for (currency of currencies; track currency) {
+                <mat-option [value]="currency">
+                  {{ currency }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Convert Button -->
+        <button mat-raised-button color="primary" (click)="convertCurrency()">Convert</button>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+}
+
+    <!-- BOTTOM TWO CARDS SIDE BY SIDE -->
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; flex:1;">
+      
+      <!-- ACCOUNT BALANCE -->
+<mat-card style="display:flex; flex-direction:column; justify-content:center; align-items:center; background-color: #f1c6b5;">
+  <mat-card-title>Account Balance</mat-card-title>
+  <mat-card-content style="text-align:center; width: 100%;">
+    
+    <!-- Horizontal row for Rupee & BTC values -->
+    <div style="display: flex; justify-content: space-around; align-items: center; margin: 15px 0;">
+      <div style="flex: 1; text-align: center; border-right: 1px solid #ccc; padding: 5px;">
+        <h1 style="color:green; margin: 0; font-size: 36px;">₹ 1,24,500</h1>
+        <span style="color: gray; font-size: 16px;">INR</span>
+      </div>
+      <div style="flex: 1; text-align: center; padding: 5px;">
+        <h1 style="color:rgb(210, 176, 25); margin: 0; font-size: 36px;">0.5432</h1>
+        <span style="color: gray; font-size: 16px;">BTC</span>
+      </div>
+    </div>
+
+  </mat-card-content>
+</mat-card>
+
+
+      <!-- RECENT TRANSACTIONS -->
+      <mat-card>
+        <mat-card-title style="text-align:center;">Recent Transactions</mat-card-title>
+        <mat-card-content>
+          <!-- Using the old Angular table structure -->
+          <table mat-table [dataSource]="[
+            { date: '2025-08-01', desc: 'Salary', amount: '+₹50,000' },
+            { date: '2025-08-05', desc: 'Groceries', amount: '-₹2,300' },
+            { date: '2025-08-07', desc: 'Electricity Bill', amount: '-₹1,200' }
+          ]" class="mat-elevation-z1" style="width:100%;">
+            
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef>Date</th>
+              <td mat-cell *matCellDef="let element">{{element.date}}</td>
+            </ng-container>
+            
+            <ng-container matColumnDef="desc">
+              <th mat-header-cell *matHeaderCellDef>Description</th>
+              <td mat-cell *matCellDef="let element">{{element.desc}}</td>
+            </ng-container>
+            
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef>Amount</th>
+              <td mat-cell *matCellDef="let element">{{element.amount}}</td>
+            </ng-container>
+            
+            <tr mat-header-row *matHeaderRowDef="['date', 'desc', 'amount']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['date', 'desc', 'amount']"></tr>
+          </table>
+        </mat-card-content>
+      </mat-card>
+
+    </div>
+
+  </div>
+
+</div>
+}
+
+<!-- MANAGE ACCOUNT PAGE -->
+@else if (currentPage === 'account') {
+  <div style="display:flex; flex-direction:column; height:100vh;">
+
+    <!-- TOP APP BAR -->
+    <mat-toolbar color="primary" style="display: flex;">
+      <div style="font-size: 18px; font-weight: 600;">
+        Manage Account
+      </div>
+      <div style="margin-left: auto;">
+        <button mat-button color="accent" (click)="currentPage='dashboard'">
+          Back
+        </button>
+      </div>
+    </mat-toolbar>
+
+    <!-- TWO BIG CARDS SIDE BY SIDE -->
+    <div style="flex:1; display:flex; justify-content:center; align-items:center; gap:40px; padding:20px;">
+
+      <!-- ACCOUNT SETTINGS CARD -->
+      <mat-card style="flex:1; min-height:450px; padding:30px; text-align:center; background-color:#f9f9f9;">
+        <mat-card-title style="font-size:26px; font-weight:bold; margin-bottom:25px;">
+          Account Settings
+        </mat-card-title>
+
+        <mat-card-content style="display:flex; flex-direction:column; gap:20px; align-items:center;">
+          <button mat-raised-button color="primary" style="min-width:220px;">Change Password</button>
+          <button mat-raised-button color="accent" style="min-width:220px;">Update Email</button>
+          <button mat-raised-button color="warn" style="min-width:220px;">Delete Account</button>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- WALLET SETTINGS CARD -->
+<mat-card style="flex:1; min-height:450px; padding:30px; text-align:center; background-color:#f1f9ff;">
+  <mat-card-title style="font-size:26px; font-weight:bold; margin-bottom:25px;">
+    Wallet Settings
+  </mat-card-title>
+
+  <mat-card-content style="display:flex; flex-direction:column; gap:20px; align-items:center;">
+
+    <!-- Connect to MetaMask (website) -->
+    <button mat-raised-button color="primary" style="min-width:220px;"
+            (click)="connectMetamask()">
+      Connect to MetaMask
+    </button>
+
+    <!-- Disconnect Wallet -->
+    <button mat-raised-button color="warn" style="min-width:220px;"
+            (click)="disconnectMetamask()">
+      Disconnect Wallet
+    </button>
+
+    <!-- Show Wallet Address -->
+    <button mat-raised-button 
+                [color]="showAddressBox ? 'warn' : 'accent'"
+                style="min-width:220px;"
+                (click)="toggleWalletAddressDisplay()"
+                [disabled]="!walletAddress && !showAddressBox">
+            {{ showAddressBox ? 'Hide Wallet Address' : 'Show Wallet Address' }}
+        </button>
+
+        @if (showAddressBox && walletAddress) {
+            <div style="
+                border: 1px solid #ccc;
+                padding: 10px;
+                background-color: #e8f5e9;
+                border-radius: 5px;
+                font-family: monospace;
+                font-size: 14px;
+                color: #388e3c;
+                word-break: break-all;
+                width: 100%;
+                text-align: center;
+                margin-top: 10px;
+            ">
+                Address: {{ walletAddress }}
+            </div>
+        } @else if (showAddressBox && !walletAddress) {
+            <div style="color: red; margin-top: 10px;">
+                Wallet not connected.
+            </div>
+        }
+
+    </mat-card-content>
+  </mat-card>
+
+
+    </div>
+
+  </div>
+}
