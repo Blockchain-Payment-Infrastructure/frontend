@@ -138,109 +138,76 @@
   <!-- MAIN CONTENT -->
   <div style="flex:1; padding:20px; display:flex; flex-direction:column; gap:20px;">
 
-    <!-- QUICK ACTIONS ON TOP -->
-<mat-card style="margin: 20px; padding: 20px; text-align: center; background-color:#FFF5E1;">
-  <mat-card-title style="font-size: 24px;">Quick Actions</mat-card-title>
-
-  <mat-card-content style="display: flex; justify-content: space-around; margin-top: 20px;">
-    <button mat-raised-button color="primary"
-            style="min-width: 140px; font-size: 18px; padding: 15px 0;"
-            (click)="toggleAction('send')">
-      Send
-    </button>
-
-    <button mat-raised-button color="accent"
-            style="min-width: 140px; font-size: 18px; padding: 15px 0;"
-            (click)="toggleAction('receive')">
-      Receive
-    </button>
-
-    <button mat-raised-button color="warn"
-            style="min-width: 140px; font-size: 18px; padding: 15px 0;"
-            (click)="toggleAction('exchange')">
-      Exchange
-    </button>
-  </mat-card-content>
-</mat-card>
-
-
-<!-- User List -->
-@if (selectedAction === 'send' || selectedAction === 'receive') {
-  <div style="margin: 20px;">
-    <mat-card style="background-color: #E6E6FA;">
-      <mat-card-title style="text-align: center; display: block;">
-        {{ selectedAction === 'send' ? 'Select User to Send To' : 'Select User to Receive From' }}
+    <!-- NEW: PHONE NUMBER SEARCH CARD (Replaces Quick Actions) -->
+    <mat-card style="margin: 20px; padding: 20px; background-color:#E8F5E9;">
+      <mat-card-title style="font-size: 24px; text-align: center; margin-bottom: 20px;">
+        Pay by Phone Number
       </mat-card-title>
-      <mat-card-content style="display: flex; flex-direction: column; align-items: center;">
-        <table style="width: 100%; border-collapse: collapse; text-align: center;">
-          @for (user of users; track user) {
-            <tr style="border-bottom: 1px solid #ddd; cursor: pointer;">
-              <td style="padding: 10px;">
-                <mat-radio-button
-                  name="selectedUser"
-                  [value]="user"
-                  (change)="onUserSelected(user)"
-                ></mat-radio-button>
-              </td>
-              <td style="padding: 10px; font-weight: bold;">{{ user.name }}</td>
-              <td style="padding: 10px; color: gray;">{{ user.contact }}</td>
-            </tr>
-          }
-        </table>
-      </mat-card-content>
-    </mat-card>
-  </div>
-}
 
-@if (selectedAction === 'exchange') {
-  <div style="margin: 20px;">
-    <mat-card style="background-color: #E6E6FA;">
-      <mat-card-title style="text-align: center;">Currency Exchange</mat-card-title>
-      <mat-card-content style="display: flex; flex-direction: column; gap: 15px;">
+      <mat-card-content style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
 
-        <div style="display: flex; gap: 15px; justify-content: center;">
-          <mat-form-field appearance="outline" style="flex: 1;">
-            <mat-label>From</mat-label>
-            <mat-select [(value)]="exchangeFrom">
-              <!-- FIX: Changed *ngFor to @for -->
-              @for (currency of currencies; track currency) {
-                <mat-option [value]="currency">
-                  {{ currency }}
-                </mat-option>
-              }
-            </mat-select>
+        <!-- Search Input and Button (MODIFIED LAYOUT) -->
+        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 500px;">
+          
+          <!-- Input Field -->
+          <mat-form-field appearance="outline" style="width: 100%;">
+            <mat-label>Enter Phone Number</mat-label>
+            <input matInput type="text" [(ngModel)]="searchPhoneNumber" placeholder="e.g., +91 98765 43210">
+            @if (searchPhoneNumber) {
+              <button matSuffix mat-icon-button aria-label="Clear" (click)="searchPhoneNumber=''">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
           </mat-form-field>
 
-          <mat-form-field appearance="outline" style="flex: 1;">
-            <mat-label>To</mat-label>
-            <mat-select [(value)]="exchangeTo">
-              <!-- FIX: Changed *ngFor to @for -->
-              @for (currency of currencies; track currency) {
-                <mat-option [value]="currency">
-                  {{ currency }}
-                </mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          <!-- Search Button (Now full width below the input) -->
+          <button mat-raised-button color="primary" 
+                  style="width: 100%;"
+                  [disabled]="!searchPhoneNumber || isSearchingWallet"
+                  (click)="searchWalletAddress()">
+            @if (isSearchingWallet) {
+              Searching...
+            } @else {
+              Search
+            }
+          </button>
         </div>
 
-        <!-- Convert Button -->
-        <button mat-raised-button color="primary" (click)="convertCurrency()">Convert</button>
+        <!-- Result Display Area -->
+        <div style="width: 100%; max-width: 500px;">
+          @if (isSearchingWallet) {
+            <p aria-busy="true" style="text-align: center;">Searching...</p>
+          } @else if (searchedWalletAddress && searchedWalletAddress.length > 0) {
+            <p style="margin-bottom: 10px;">Click an address to use:</p>
+            <div style="border: 1px solid #ccc; border-radius: 5px; background-color: white;">
+              @for (addr of searchedWalletAddress; track addr.address) {
+                <div 
+                  style="padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; font-family: monospace; word-break: break-all;"
+                  (click)="useAddress(addr.address)">
+                  {{ addr.address }}
+                </div>
+              }
+            </div>
+          } @else if (searchedWalletAddress && searchedWalletAddress.length === 0 && searchPhoneNumber) {
+            <div style="color: red; padding: 10px; border: 1px solid red; border-radius: 5px; text-align: center;">
+              No wallet address found for that phone number.
+            </div>
+          }
+        </div>
 
       </mat-card-content>
     </mat-card>
-  </div>
-}
+
 
     <!-- BOTTOM TWO CARDS SIDE BY SIDE -->
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; flex:1;">
       
-      <!-- ACCOUNT BALANCE -->
+      <!-- ACCOUNT BALANCE (Hardcoded as requested) -->
 <mat-card style="display:flex; flex-direction:column; justify-content:center; align-items:center; background-color: #f1c6b5;">
   <mat-card-title>Account Balance</mat-card-title>
   <mat-card-content style="text-align:center; width: 100%;">
     
-    <!-- Horizontal row for Rupee & BTC values -->
+    <!-- Horizontal row for Rupee & BTC values (Original Hardcoded values) -->
     <div style="display: flex; justify-content: space-around; align-items: center; margin: 15px 0;">
       <div style="flex: 1; text-align: center; border-right: 1px solid #ccc; padding: 5px;">
         <h1 style="color:green; margin: 0; font-size: 36px;">₹ 1,24,500</h1>

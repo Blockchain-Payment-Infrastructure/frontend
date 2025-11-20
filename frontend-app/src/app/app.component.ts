@@ -3,11 +3,12 @@ import { RouterOutlet } from '@angular/router';
 
 import { FormsModule } from '@angular/forms';
 
-import { AuthResponse } from "./payment.service";
+import { AuthResponse, WalletAddress } from "./payment.service"; // MODIFIED: WalletAddress and AuthResponse
+import { ethers } from 'ethers'; // NEW: Import Ethers for MetaMask interaction
 
 // --- MATERIAL IMPORTS ---
 import { MatCardModule } from '@angular/material/card';
-import { MatTabsModule, MatTabGroup } from '@angular/material/tabs'; // FIX: MatTabGroup added
+import { MatTabsModule, MatTabGroup } from '@angular/material/tabs';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -21,8 +22,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { HttpClientModule } from '@angular/common/http';
 import { PaymentService } from './payment.service';
 import { catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
-
+import { of, throwError } from 'rxjs';
 
 // Define expected data structure
 type TransactionDetails = { txHash: string, status: string, amount: number } | null;
@@ -53,44 +53,129 @@ type TransactionDetails = { txHash: string, status: string, amount: number } | n
 export class AppComponent {
   title = 'demo';
 
-  // FIX: ViewChild reference for programmatic tab switching (requires #tabGroup in HTML)
   @ViewChild('tabGroup') tabGroup!: MatTabGroup;
 
-  // --- UI STATE / FORM FIELDS ---
+  // --- AUTH/UI STATE ---
   username: string = '';
   username2: string = '';
   phone_number: string = '';
   password: string = '';
   email: string = '';
   currentPage = 'login';
+  private userAccessToken: string | null = null; // Stores the JWT token
 
   // DASHBOARD STATE & DATA
-  users = [
-    { name: 'Arun Swing', contact: '+91 98765 43210' },
-    { name: 'John Bus', contact: '+91 91234 56789' },
-    { name: 'Bundaswami', contact: '+91 99887 77665' }
-  ];
-  selectedAction: 'send' | 'receive' | 'exchange' | null = null;
-  currencies = ['INR', 'USD', 'BTC', 'ETH'];
-  exchangeFrom: string | null = null;
-  exchangeTo: string | null = null;
   walletAddress: string | null = null;
-
-  // NEW: State for controlling wallet address visibility
   showAddressBox: boolean = false;
-
+  
+  // NEW: State for Phone Number Search
+  searchPhoneNumber: string = '';
+  searchedWalletAddress: WalletAddress[] | null = null;
+  isSearchingWallet: boolean = false;
+  
   // API STATE
   transactionHashInput: string = '';
   transactionDetails: TransactionDetails = null;
   isLoadingTransaction: boolean = false;
   isAuthenticating: boolean = false;
 
-  // INJECT the PaymentService
   constructor(private paymentService: PaymentService) { }
+  
+  // Helper to get token
+  private getAccessToken(): string | null {
+    return this.userAccessToken;
+  }
 
+  // NEW: Helper to get the MetaMask provider
+  private getProvider(): ethers.BrowserProvider | null {
+    if (typeof (window as any).ethereum === 'undefined') {
+      return null;
+    }
+    return new ethers.BrowserProvider((window as any).ethereum);
+  }
 
   // -------------------------------------------------------------------
-  // --- API METHODS ---
+  // --- Ethers.js / Wallet Connection Methods ---
+  // -------------------------------------------------------------------
+  
+  // MODIFIED: connectMetamask to handle the full sign-and-verify flow
+  async connectMetamask() {
+    this.showAddressBox = false;
+    const provider = this.getProvider();
+
+    if (!provider) {
+      alert('MetaMask is not installed. Redirecting to download page.');
+      this.goToMetamaskSite();
+      return;
+    }
+    
+    // 1. Connect and get the wallet address
+    try {
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
+      
+      // 2. Define the message to sign (as per security best practice)
+      const message = "Connect wallet to backend service for user: " + this.username; 
+      
+      // 3. Request the user to sign the message
+      alert(`Please sign the message in MetaMask to verify wallet ownership.`);
+      const signature = await signer.signMessage(message);
+
+      // --- NEW CONSOLE LOGS START ---
+      console.log('--- SIGNATURE VERIFICATION DATA SENT TO BACKEND ---');
+      console.log('Original Message (Text Signed):', message);
+      console.log('Generated Signature (Hex):', signature);
+      console.log('Wallet Address Used:', address);
+      console.log('----------------------------------------------------');
+      // --- NEW CONSOLE LOGS END ---
+
+      // 4. Send the verification request to the backend
+      const token = this.getAccessToken();
+      if (!token) {
+        alert('Authentication error: Please log in again.');
+        return;
+      }
+      
+      this.paymentService.connectWalletBackend({ message, signature }, token).subscribe({
+        next: (response) => {
+          this.walletAddress = address; // Use the address we just connected
+          console.log('Backend Wallet Association SUCCESSFUL. Connected Address:', response.walletAddress);
+          alert(`Wallet Connected and Verified! Address: ${response.walletAddress}`);
+        },
+        error: (error) => {
+          this.walletAddress = null;
+          console.error('Wallet Verification Failed:', error);
+          if (error.status === 401) {
+            alert('Verification Failed: Session expired. Please log in again.');
+          } else if (error.status === 409) {
+            alert('Wallet already linked to an account.');
+          } else {
+            alert(`Wallet Verification Failed: ${error.message || 'Check console for details.'}`);
+          }
+        }
+      });
+      
+    } catch (error: any) {
+      console.error('Wallet connection or signing rejected/failed:', error);
+      this.walletAddress = null;
+      if (error.code === 4001) {
+        alert('Connection/Signing rejected by user.');
+      } else {
+        alert(`Failed to connect/sign: ${error.message || 'Check console.'}`);
+      }
+    }
+  }
+
+  goToMetamaskSite() { window.open('https://metamask.io/download/', '_blank'); }
+
+  disconnectMetamask() {
+    this.walletAddress = null;
+    this.showAddressBox = false;
+    console.error('Wallet disconnected!');
+  }
+  
+  // -------------------------------------------------------------------
+  // --- API METHODS (Rest unchanged) ---
   // -------------------------------------------------------------------
 
   login() {
@@ -109,15 +194,15 @@ export class AppComponent {
         console.error('Login Failed. Check console for details.');
         return of(null);
       })
-    ).subscribe((response: AuthResponse | null) => { // Cast response type
+    ).subscribe((response: AuthResponse | null) => {
       this.isAuthenticating = false;
 
-      // FIX: Check for response existence AND use access_token
       if (response && response.access_token) {
-        this.username = this.email; // Set username for dashboard greeting
-        this.password = '';          // Clear password field
+        this.userAccessToken = response.access_token; // **SAVE TOKEN HERE**
+        this.username = this.email;
+        this.password = '';
         this.currentPage = 'dashboard';
-        console.log("Login Successful. Token:", response.access_token);
+        console.log("Login Successful. Token saved.");
       }
     });
   }
@@ -135,7 +220,7 @@ export class AppComponent {
       phone_number: this.phone_number,
       password: this.password
     };
-
+    
     this.paymentService.userRegister(payload).pipe(
       catchError(err => {
         console.error('Registration error:', err);
@@ -143,23 +228,19 @@ export class AppComponent {
         console.error('Registration Failed. Check console for details.');
         return of(null);
       })
-    ).subscribe((response: AuthResponse | null) => { // Cast response type
+    ).subscribe((response: AuthResponse | null) => {
       this.isAuthenticating = false;
 
-      // Check for a successful (non-null) registration response
       if (response) {
         console.log('Registration successful! Redirecting to Login tab.');
 
-        // FIX: Clear registration fields
         this.username2 = '';
         this.phone_number = '';
         this.password = '';
         this.email = '';
 
-        // Switch to 'login' page
         this.currentPage = 'login';
 
-        // FIX: PROGRAMMATICALLY SWITCH THE TAB to the first tab (Login)
         setTimeout(() => {
           if (this.tabGroup) {
             this.tabGroup.selectedIndex = 0;
@@ -169,6 +250,47 @@ export class AppComponent {
     });
   }
 
+  searchWalletAddress() {
+    if (!this.searchPhoneNumber) {
+      console.error('Please enter a phone number to search.');
+      return;
+    }
+    
+    const token = this.getAccessToken();
+    if (!token) {
+      alert('You must be logged in to search for a wallet address.');
+      return;
+    }
+
+    this.isSearchingWallet = true;
+    this.searchedWalletAddress = null;
+
+    this.paymentService.getWalletAddressByPhone(this.searchPhoneNumber, token).pipe(
+      catchError((error) => {
+        this.isSearchingWallet = false;
+        
+        if (error.status === 401) {
+          alert('Unauthorized: Session expired or invalid token. Please log in again.');
+        } else if (error.status === 404 || (error.error && error.error.length === 0)) { 
+          console.log(`No wallet found for phone number: ${this.searchPhoneNumber}`);
+        } else {
+          console.error('Error during wallet lookup:', error);
+          alert(`Search failed: ${error.message}`);
+        }
+        this.searchedWalletAddress = [];
+        return throwError(() => new Error('Wallet lookup failed'));
+      })
+    ).subscribe((response: WalletAddress[]) => {
+      this.isSearchingWallet = false;
+      this.searchedWalletAddress = response;
+      if (response && response.length > 0) {
+        console.log(`Found ${response.length} addresses.`);
+      } else {
+        console.log('Search completed, but no addresses found.');
+      }
+    });
+  }
+  
   lookupTransaction() {
     if (!this.transactionHashInput) {
       console.error('Please enter a transaction hash.');
@@ -199,78 +321,34 @@ export class AppComponent {
 
 
   // -------------------------------------------------------------------
-  // --- UI METHODS ---
+  // --- UI METHODS (Rest unchanged) ---
   // -------------------------------------------------------------------
-
-  showUsers(action: 'send' | 'receive') { this.selectedAction = action; }
-  onUserSelected(user: any) { console.log('Selected user:', user); }
-  toggleAction(action: 'send' | 'receive' | 'exchange') {
-    this.selectedAction = (this.selectedAction === action) ? null : action;
+  
+  useAddress(address: string) {
+    console.log(`Address selected for payment: ${address}`); 
+    alert(`Address selected: ${address}. You would typically populate a 'Send' form here.`);
   }
 
-  // NEW: Method to initiate MetaMask connection
-  async connectMetamask() {
-    this.showAddressBox = false; // Hide display when attempting to connect
-
-    if (typeof (window as any).ethereum !== 'undefined') {
-      try {
-        // This is the call that triggers the MetaMask extension UI
-        const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
-
-        if (accounts && accounts.length > 0) {
-          this.walletAddress = accounts[0];
-          console.log('Wallet connected successfully:', this.walletAddress);
-          alert(`Connected to MetaMask! Address: ${this.walletAddress}`);
-        }
-      } catch (error: any) {
-        console.error('User rejected connection or an error occurred:', error);
-        this.walletAddress = null;
-        if (error.code === 4001) {
-          alert('Connection rejected by user.');
-        } else {
-          alert('Failed to connect to MetaMask.');
-        }
-      }
-    } else {
-      alert('MetaMask is not installed. Redirecting to download page.');
-      this.goToMetamaskSite();
-    }
-  }
-
-  // Keep this method available for users without the extension
-  goToMetamaskSite() { window.open('https://metamask.io/download/', '_blank'); }
-
-  disconnectMetamask() {
-    this.walletAddress = null;
-    this.showAddressBox = false; // FIX: Hide display when disconnecting
-    console.error('Wallet disconnected!');
-  }
-
-  // FIX: Update to control showAddressBox state
   showWalletAddress() {
     if (this.walletAddress) {
       this.showAddressBox = true;
     } else {
       console.error('No wallet connected');
-      this.showAddressBox = false; // Ensure it's hidden if no wallet is connected
+      this.showAddressBox = false;
     }
   }
 
   toggleWalletAddressDisplay() {
     if (this.walletAddress) {
-      // Flip the state: true becomes false, false becomes true
       this.showAddressBox = !this.showAddressBox;
     } else {
-      // If no wallet is connected, just hide the box and give an error
       this.showAddressBox = false;
       console.error('Cannot show/hide address: No wallet connected.');
     }
   }
 
-  convertCurrency() { console.log(`Convert from ${this.exchangeFrom} to ${this.exchangeTo}`); }
-
   manageAccount() {
     this.currentPage = 'account';
-    this.showAddressBox = false; // Reset address visibility on page change
+    this.showAddressBox = false;
   }
 }

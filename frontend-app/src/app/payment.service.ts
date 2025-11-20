@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs'; 
 
 // --- INTERFACES ---
 
 // Data expected for Login/Register payloads
 interface AuthPayload {
   password: string;
-  email: string; // Optional for login endpoint
+  email: string;
 }
 
 // Data expected back upon successful Login/Register
@@ -26,12 +26,28 @@ interface PaymentTransaction {
   receiver: string;
 }
 
+// Data structure for the wallet addresses array returned by the backend
+export interface WalletAddress {
+  address: string;
+}
+
+// NEW: Interface for the POST /wallet/connect request body
+interface ConnectWalletPayload {
+  message: string;
+  signature: string;
+}
+
+// NEW: Interface for the POST /wallet/connect response body
+interface ConnectWalletResponse {
+  message: string;
+  walletAddress: string; // Assuming the server returns the connected address
+}
+
+
 @Injectable({
   providedIn: 'root'
 })
 export class PaymentService {
-
-  // Finalized Live Backend URL
 
   constructor(private http: HttpClient) { }
 
@@ -40,7 +56,6 @@ export class PaymentService {
    */
   userLogin(payload: AuthPayload): Observable<AuthResponse> {
     const endpoint = "api/auth/login";
-    console.log(`Calling backend login endpoint: ${endpoint}`);
     return this.http.post<AuthResponse>(endpoint, payload);
   }
 
@@ -49,7 +64,6 @@ export class PaymentService {
    */
   userRegister(payload: AuthPayload): Observable<AuthResponse> {
     const endpoint = "api/auth/signup";
-    console.log(`Calling backend register endpoint: ${endpoint}`);
     return this.http.post<AuthResponse>(endpoint, payload);
   }
 
@@ -58,7 +72,33 @@ export class PaymentService {
    */
   getTransactionDetails(transactionHash: string): Observable<PaymentTransaction> {
     const endpoint = `api/payments/tx/${transactionHash}`;
-    console.log(`Calling backend endpoint: ${endpoint}`);
     return this.http.get<PaymentTransaction>(endpoint);
+  }
+
+  /**
+   * Links to the backend endpoint: GET /wallet/addresses/{phone_number}
+   */
+  getWalletAddressByPhone(phoneNumber: string, token: string | null): Observable<WalletAddress[]> {
+    if (!token) {
+      return throwError(() => new Error('Missing authentication token'));
+    }
+    const headers = { 'Authorization': `Bearer ${token}` };
+    const endpoint = `api/wallet/addresses/${encodeURIComponent(phoneNumber)}`;
+    return this.http.get<WalletAddress[]>(endpoint, { headers: headers });
+  }
+
+  /**
+   * NEW: Links to the backend endpoint: POST /wallet/connect
+   * Connects the wallet by verifying the signature against the token.
+   */
+  connectWalletBackend(payload: ConnectWalletPayload, token: string | null): Observable<ConnectWalletResponse> {
+    if (!token) {
+      return throwError(() => new Error('Missing authentication token'));
+    }
+    const headers = { 'Authorization': `Bearer ${token}` };
+    const endpoint = "api/wallet/connect";
+    
+    // NOTE: The backend expects the payload (message, signature) in the body.
+    return this.http.post<ConnectWalletResponse>(endpoint, payload, { headers: headers });
   }
 }
