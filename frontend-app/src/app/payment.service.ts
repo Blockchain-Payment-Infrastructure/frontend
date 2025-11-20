@@ -11,7 +11,7 @@ interface AuthPayload {
 }
 
 // Data expected back upon successful Login/Register
-interface AuthResponse {
+export interface AuthResponse {
   access_token: string;
   // Add other properties if your backend returns them
 }
@@ -20,7 +20,7 @@ interface AuthResponse {
 interface PaymentTransaction {
   txHash: string;
   amount: number;
-  status: 'pending' | 'completed' | 'failed';
+  status: 'pending' | 'completed' | 'failed' | 'cancelled';
   timestamp: string;
   sender: string;
   receiver: string;
