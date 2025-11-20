@@ -1,10 +1,12 @@
 import { Component, ViewChild } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+// Removed RouterOutlet import as it's not used in the template's current structure
+// import { RouterOutlet } from '@angular/router'; 
 
 import { FormsModule } from '@angular/forms';
 
-import { AuthResponse, WalletAddress } from "./payment.service"; // MODIFIED: WalletAddress and AuthResponse
-import { ethers } from 'ethers'; // NEW: Import Ethers for MetaMask interaction
+import { AuthResponse, WalletAddress } from "./payment.service";
+import { ethers } from 'ethers'; // RE-ADDED: Necessary for MetaMask transactions
+import { MatDialogModule } from '@angular/material/dialog'; // NEW: For modal/popup styling
 
 // --- MATERIAL IMPORTS ---
 import { MatCardModule } from '@angular/material/card';
@@ -31,7 +33,7 @@ type TransactionDetails = { txHash: string, status: string, amount: number } | n
   selector: 'app-root',
   standalone: true,
   imports: [
-    RouterOutlet,
+    // Removed RouterOutlet
     FormsModule,
     HttpClientModule,
     MatCardModule,
@@ -43,7 +45,8 @@ type TransactionDetails = { txHash: string, status: string, amount: number } | n
     MatProgressBarModule,
     MatRadioModule,
     MatSelectModule,
-    MatTableModule
+    MatTableModule,
+    MatDialogModule // Added MatDialogModule for modal background/structure
   ],
   providers: [PaymentService],
   templateUrl: './app.component.html',
@@ -62,17 +65,24 @@ export class AppComponent {
   password: string = '';
   email: string = '';
   currentPage = 'login';
-  private userAccessToken: string | null = null; // Stores the JWT token
+  private userAccessToken: string | null = null; 
 
   // DASHBOARD STATE & DATA
   walletAddress: string | null = null;
   showAddressBox: boolean = false;
+  
+  // FIXED: Missing property declarations for Payment Modal Form
+  showPaymentModal: boolean = false; // Fixes TS2339 for showPaymentModal
+  recipientAddress: string | null = null; // Fixes TS2339 for recipientAddress
+  paymentAmount: number | null = null;    // Fixes TS2339 for paymentAmount
+  paymentDescription: string = ''; // Fixes TS2339 for paymentDescription
+  isProcessingPayment: boolean = false; // Fixes TS2339 for isProcessingPayment
 
-  // NEW: State for Phone Number Search
+  // State for Phone Number Search
   searchPhoneNumber: string = '';
   searchedWalletAddress: WalletAddress[] | null = null;
   isSearchingWallet: boolean = false;
-
+  
   // API STATE
   transactionHashInput: string = '';
   transactionDetails: TransactionDetails = null;
@@ -80,13 +90,11 @@ export class AppComponent {
   isAuthenticating: boolean = false;
 
   constructor(private paymentService: PaymentService) { }
-
-  // Helper to get token
+  
   private getAccessToken(): string | null {
     return this.userAccessToken;
   }
 
-  // NEW: Helper to get the MetaMask provider
   private getProvider(): ethers.BrowserProvider | null {
     if (typeof (window as any).ethereum === 'undefined') {
       return null;
@@ -95,89 +103,123 @@ export class AppComponent {
   }
 
   // -------------------------------------------------------------------
-  // --- Ethers.js / Wallet Connection Methods ---
+  // --- UI/MODAL METHODS ---
+  // -------------------------------------------------------------------
+  
+  // MODIFIED: useAddress now opens the modal
+  useAddress(address: string) {
+    if (!this.walletAddress) {
+      alert('Please connect your MetaMask wallet first to send payments.');
+      return;
+    }
+    this.recipientAddress = address;
+    this.paymentAmount = null; // Clear previous amount
+    this.paymentDescription = ''; // Clear previous description
+    this.showPaymentModal = true;
+    console.log(`Payment modal opened for recipient: ${address}`); 
+  }
+
+  // FIXED: Missing method declaration for closePaymentModal
+  closePaymentModal() { // Fixes TS2339 for closePaymentModal
+    this.showPaymentModal = false;
+    this.isProcessingPayment = false;
+  }
+
+  // -------------------------------------------------------------------
+  // --- TRANSACTION METHODS (New Core Logic) ---
   // -------------------------------------------------------------------
 
-  // MODIFIED: connectMetamask to handle the full sign-and-verify flow
-  async connectMetamask() {
-    this.showAddressBox = false;
-    const provider = this.getProvider();
-
-    if (!provider) {
-      alert('MetaMask is not installed. Redirecting to download page.');
-      this.goToMetamaskSite();
+  // FIXED: Missing method declaration for sendPayment
+  async sendPayment() { // Fixes TS2339 for sendPayment
+    if (!this.walletAddress) {
+      alert('Wallet not connected. Please connect MetaMask.');
+      return;
+    }
+    if (!this.recipientAddress || !this.paymentAmount || this.paymentAmount <= 0) {
+      alert('Please enter a valid amount and recipient.');
+      return;
+    }
+    if (!ethers.isAddress(this.recipientAddress)) {
+      alert('Invalid recipient address format.');
       return;
     }
 
-    // 1. Connect and get the wallet address
+    const provider = this.getProvider();
+    if (!provider) {
+      alert('MetaMask provider not available.');
+      return;
+    }
+
+    this.isProcessingPayment = true;
+    const token = this.getAccessToken();
+
     try {
+      // 1. Prepare Ethers transaction
       const signer = await provider.getSigner();
-      const address = await signer.getAddress();
+      const amountWei = ethers.parseEther(this.paymentAmount.toString());
 
-      // 2. Define the message to sign (as per security best practice)
-      const message = "Connect wallet to backend service for user: " + this.username;
+      console.log(`Attempting to send ${this.paymentAmount} ETH to ${this.recipientAddress}...`);
+      alert('Please confirm the transaction in MetaMask.');
 
-      // 3. Request the user to sign the message
-      alert(`Please sign the message in MetaMask to verify wallet ownership.`);
-      const signature = await signer.signMessage(message);
-
-      // --- NEW CONSOLE LOGS START ---
-      console.log('--- SIGNATURE VERIFICATION DATA SENT TO BACKEND ---');
-      console.log('Original Message (Text Signed):', message);
-      console.log('Generated Signature (Hex):', signature);
-      console.log('Wallet Address Used:', address);
-      console.log('----------------------------------------------------');
-      // --- NEW CONSOLE LOGS END ---
-
-      // 4. Send the verification request to the backend
-      const token = this.getAccessToken();
-      if (!token) {
-        alert('Authentication error: Please log in again.');
-        return;
-      }
-
-      this.paymentService.connectWalletBackend({ message, signature }, token).subscribe({
-        next: (response) => {
-          this.walletAddress = address; // Use the address we just connected
-          console.log('Backend Wallet Association SUCCESSFUL. Connected Address:', response.walletAddress);
-          alert(`Wallet Connected and Verified! Address: ${response.walletAddress}`);
-        },
-        error: (error) => {
-          this.walletAddress = null;
-          console.error('Wallet Verification Failed:', error);
-          if (error.status === 401) {
-            alert('Verification Failed: Session expired. Please log in again.');
-        } else if (error.status === 409) {
-            alert('Wallet already linked to an account.');
-          } else {
-            alert(`Wallet Verification Failed: ${error.message || 'Check console for details.'}`);
-          }
-        }
+      // 2. Send transaction (MetaMask popup appears here)
+      const tx = await signer.sendTransaction({
+        to: this.recipientAddress,
+        value: amountWei,
       });
 
+      console.log(`Transaction sent to network. Hash: ${tx.hash}`);
+      alert(`Transaction sent! Waiting for block confirmation...`);
+
+      // 3. Wait for transaction confirmation
+      const receipt = await tx.wait();
+      
+      if (!receipt || receipt.status !== 1) {
+          throw new Error('Transaction failed or was reverted on the blockchain.');
+      }
+
+      const transactionHash = receipt.hash;
+      console.log('Transaction confirmed successfully:', transactionHash);
+
+      // 4. Create record in backend (POST /payments)
+      this.paymentService.createPaymentRecord({
+        amount: amountWei.toString(), // Send amount in Wei as string or format required by your backend
+        currency: 'ETH',
+        description: this.paymentDescription || 'No description',
+        to_address: this.recipientAddress,
+        transaction_hash: transactionHash,
+      }, token).subscribe({
+        next: (response) => {
+          alert(`Success! Payment recorded by backend.`);
+          this.closePaymentModal();
+          // NOTE: You would typically refresh transaction history here.
+        },
+        error: (err) => {
+          console.error('Backend recording failed:', err);
+          alert('Transaction was successful on the blockchain, but failed to record on the backend.');
+          this.closePaymentModal();
+        }
+      });
+      
     } catch (error: any) {
-      console.error('Wallet connection or signing rejected/failed:', error);
-      this.walletAddress = null;
+      this.isProcessingPayment = false;
+      console.error('Payment process failed:', error);
+      
+      // Handle MetaMask rejection error (code 4001)
       if (error.code === 4001) {
-        alert('Connection/Signing rejected by user.');
+        alert('Transaction rejected by user in MetaMask.');
+      } else if (error.message && error.message.includes('insufficient funds')) {
+        alert('Payment Failed: Insufficient funds in wallet.');
       } else {
-        alert(`Failed to connect/sign: ${error.message || 'Check console.'}`);
+        alert(`Payment Failed: ${error.message || 'Check console for details.'}`);
       }
     }
   }
 
-  goToMetamaskSite() { window.open('https://metamask.io/download/', '_blank'); }
-
-  disconnectMetamask() {
-    this.walletAddress = null;
-    this.showAddressBox = false;
-    console.error('Wallet disconnected!');
-  }
 
   // -------------------------------------------------------------------
-  // --- API METHODS (Rest unchanged) ---
+  // --- AUTH & SEARCH METHODS (Continued) ---
   // -------------------------------------------------------------------
-
+  
   login() {
     if (!this.email || !this.password) {
       console.error('Please enter both email and password.');
@@ -220,7 +262,7 @@ export class AppComponent {
       phone_number: this.phone_number,
       password: this.password
     };
-
+    
     this.paymentService.userRegister(payload).pipe(
       catchError(err => {
         console.error('Registration error:', err);
@@ -249,13 +291,75 @@ export class AppComponent {
       }
     });
   }
+  
+  // Wallet Connect (Updated for Signature Verification)
+  async connectMetamask() {
+    this.showAddressBox = false;
+    const provider = this.getProvider();
+
+    if (!provider) {
+      alert('MetaMask is not installed. Redirecting to download page.');
+      this.goToMetamaskSite();
+      return;
+    }
+    
+    try {
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
+      
+      const message = "Connect wallet to backend service for user: " + this.username; 
+      
+      alert(`Please sign the message in MetaMask to verify wallet ownership.`);
+      const signature = await signer.signMessage(message);
+
+      console.log('--- SIGNATURE VERIFICATION DATA SENT TO BACKEND ---');
+      console.log('Original Message (Text Signed):', message);
+      console.log('Generated Signature (Hex):', signature);
+      console.log('Wallet Address Used:', address);
+      console.log('----------------------------------------------------');
+      
+      const token = this.getAccessToken();
+      if (!token) {
+        alert('Authentication error: Please log in again.');
+        return;
+      }
+      
+      this.paymentService.connectWalletBackend({ message, signature }, token).subscribe({
+        next: (response) => {
+          this.walletAddress = address;
+          console.log('Backend Wallet Association SUCCESSFUL. Connected Address:', response.walletAddress);
+          alert(`Wallet Connected and Verified! Address: ${response.walletAddress}`);
+        },
+        error: (error) => {
+          this.walletAddress = null;
+          console.error('Wallet Verification Failed:', error);
+          if (error.status === 401) {
+            alert('Verification Failed: Session expired. Please log in again.');
+          } else if (error.status === 409) {
+            alert('Wallet already linked to an account.');
+          } else {
+            alert(`Wallet Verification Failed: ${error.message || 'Check console for details.'}`);
+          }
+        }
+      });
+      
+    } catch (error: any) {
+      console.error('Wallet connection or signing rejected/failed:', error);
+      this.walletAddress = null;
+      if (error.code === 4001) {
+        alert('Connection/Signing rejected by user.');
+      } else {
+        alert(`Failed to connect/sign: ${error.message || 'Check console.'}`);
+      }
+    }
+  }
 
   searchWalletAddress() {
     if (!this.searchPhoneNumber) {
       console.error('Please enter a phone number to search.');
       return;
     }
-
+    
     const token = this.getAccessToken();
     if (!token) {
       alert('You must be logged in to search for a wallet address.');
@@ -268,10 +372,10 @@ export class AppComponent {
     this.paymentService.getWalletAddressByPhone(this.searchPhoneNumber, token).pipe(
       catchError((error) => {
         this.isSearchingWallet = false;
-
+        
         if (error.status === 401) {
           alert('Unauthorized: Session expired or invalid token. Please log in again.');
-        } else if (error.status === 404 || (error.error && error.error.length === 0)) {
+        } else if (error.status === 404 || (error.error && error.error.length === 0)) { 
           console.log(`No wallet found for phone number: ${this.searchPhoneNumber}`);
         } else {
           console.error('Error during wallet lookup:', error);
@@ -290,7 +394,7 @@ export class AppComponent {
       }
     });
   }
-
+  
   lookupTransaction() {
     if (!this.transactionHashInput) {
       console.error('Please enter a transaction hash.');
@@ -321,12 +425,15 @@ export class AppComponent {
 
 
   // -------------------------------------------------------------------
-  // --- UI METHODS (Rest unchanged) ---
+  // --- UI METHODS (Continued) ---
   // -------------------------------------------------------------------
+  
+  goToMetamaskSite() { window.open('https://metamask.io/download/', '_blank'); }
 
-  useAddress(address: string) {
-    console.log(`Address selected for payment: ${address}`);
-    alert(`Address selected: ${address}. You would typically populate a 'Send' form here.`);
+  disconnectMetamask() {
+    this.walletAddress = null;
+    this.showAddressBox = false;
+    console.error('Wallet disconnected!');
   }
 
   showWalletAddress() {

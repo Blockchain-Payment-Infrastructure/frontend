@@ -353,3 +353,72 @@
 
   </div>
 }
+
+<!-- NEW: SEND PAYMENT MODAL (Popup Tile) -->
+@if (showPaymentModal) {
+    <!-- Modal Backdrop -->
+    <div style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    " (click)="!isProcessingPayment && closePaymentModal()">
+        
+        <!-- Modal Content (Card) -->
+        <mat-card style="width: 90%; max-width: 500px; padding: 30px;" (click)="$event.stopPropagation()">
+            <mat-card-title style="text-align: center; margin-bottom: 20px;">
+                Send ETH Payment
+            </mat-card-title>
+
+            <mat-card-subtitle style="word-break: break-all; text-align: center; color: #555;">
+                To: <span style="font-weight: bold;">{{ recipientAddress }}</span>
+            </mat-card-subtitle>
+            
+            <mat-card-content style="display: flex; flex-direction: column; gap: 15px;">
+                
+                <!-- Amount Input -->
+                <mat-form-field appearance="outline" style="width: 100%;">
+                    <mat-label>Amount (ETH)</mat-label>
+                    <input matInput type="number" [(ngModel)]="paymentAmount" required min="0.000001">
+                    <span matSuffix>ETH</span>
+                </mat-form-field>
+
+                <!-- Description Input -->
+                <mat-form-field appearance="outline" style="width: 100%;">
+                    <mat-label>Description (Optional)</mat-label>
+                    <textarea matInput [(ngModel)]="paymentDescription" rows="2"></textarea>
+                </mat-form-field>
+                
+                <!-- Status/Loader -->
+                @if (isProcessingPayment) {
+                    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                    <p style="text-align: center; color: #1565C0;">Waiting for MetaMask confirmation...</p>
+                }
+
+            </mat-card-content>
+
+            <mat-card-actions style="display: flex; justify-content: space-between; gap: 10px;">
+                <button mat-stroked-button color="primary" 
+                        (click)="closePaymentModal()" 
+                        [disabled]="isProcessingPayment" 
+                        style="flex: 1;">
+                    Cancel
+                </button>
+                
+                <button mat-raised-button color="accent" 
+                        (click)="sendPayment()" 
+                        [disabled]="isProcessingPayment || !paymentAmount || paymentAmount <= 0"
+                        style="flex: 1;">
+                    Send
+                </button>
+            </mat-card-actions>
+        </mat-card>
+
+    </div>
+}

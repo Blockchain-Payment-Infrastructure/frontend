@@ -31,16 +31,32 @@ export interface WalletAddress {
   address: string;
 }
 
-// NEW: Interface for the POST /wallet/connect request body
+// Interface for the POST /wallet/connect request body
 interface ConnectWalletPayload {
   message: string;
   signature: string;
 }
 
-// NEW: Interface for the POST /wallet/connect response body
+// Interface for the POST /wallet/connect response body
 interface ConnectWalletResponse {
   message: string;
-  walletAddress: string; // Assuming the server returns the connected address
+  walletAddress: string; 
+}
+
+// Interface for the POST /payments request body (based on the image)
+interface CreatePaymentPayload {
+  amount: string;          // Sent as string (Wei or formatted ETH, depending on backend)
+  currency: string;        // e.g., "ETH"
+  description: string;
+  to_address: string;      // Recipient address
+  transaction_hash: string; // Hash received after the blockchain transaction completes
+}
+
+// Interface for the POST /payments response (assuming it returns the new transaction)
+interface CreatePaymentResponse {
+  transaction_hash: string;
+  status: string; // e.g., 'pending'
+  // ... other fields from the 201 response in the image ...
 }
 
 
@@ -88,8 +104,7 @@ export class PaymentService {
   }
 
   /**
-   * NEW: Links to the backend endpoint: POST /wallet/connect
-   * Connects the wallet by verifying the signature against the token.
+   * Links to the backend endpoint: POST /wallet/connect
    */
   connectWalletBackend(payload: ConnectWalletPayload, token: string | null): Observable<ConnectWalletResponse> {
     if (!token) {
@@ -97,8 +112,19 @@ export class PaymentService {
     }
     const headers = { 'Authorization': `Bearer ${token}` };
     const endpoint = "api/wallet/connect";
-    
-    // NOTE: The backend expects the payload (message, signature) in the body.
     return this.http.post<ConnectWalletResponse>(endpoint, payload, { headers: headers });
+  }
+
+  /**
+   * Links to the backend endpoint: POST /payments (Authenticated)
+   */
+  createPaymentRecord(payload: CreatePaymentPayload, token: string | null): Observable<CreatePaymentResponse> {
+    if (!token) {
+      return throwError(() => new Error('Missing authentication token'));
+    }
+    const headers = { 'Authorization': `Bearer ${token}` };
+    const endpoint = "api/payments";
+    console.log("Sending payment record to backend:", payload);
+    return this.http.post<CreatePaymentResponse>(endpoint, payload, { headers: headers });
   }
 }
