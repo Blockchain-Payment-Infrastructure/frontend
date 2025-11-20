@@ -67,12 +67,12 @@ export class AppComponent {
   // DASHBOARD STATE & DATA
   walletAddress: string | null = null;
   showAddressBox: boolean = false;
-  
+
   // NEW: State for Phone Number Search
   searchPhoneNumber: string = '';
   searchedWalletAddress: WalletAddress[] | null = null;
   isSearchingWallet: boolean = false;
-  
+
   // API STATE
   transactionHashInput: string = '';
   transactionDetails: TransactionDetails = null;
@@ -80,7 +80,7 @@ export class AppComponent {
   isAuthenticating: boolean = false;
 
   constructor(private paymentService: PaymentService) { }
-  
+
   // Helper to get token
   private getAccessToken(): string | null {
     return this.userAccessToken;
@@ -97,7 +97,7 @@ export class AppComponent {
   // -------------------------------------------------------------------
   // --- Ethers.js / Wallet Connection Methods ---
   // -------------------------------------------------------------------
-  
+
   // MODIFIED: connectMetamask to handle the full sign-and-verify flow
   async connectMetamask() {
     this.showAddressBox = false;
@@ -108,15 +108,15 @@ export class AppComponent {
       this.goToMetamaskSite();
       return;
     }
-    
+
     // 1. Connect and get the wallet address
     try {
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
-      
+
       // 2. Define the message to sign (as per security best practice)
-      const message = "Connect wallet to backend service for user: " + this.username; 
-      
+      const message = "Connect wallet to backend service for user: " + this.username;
+
       // 3. Request the user to sign the message
       alert(`Please sign the message in MetaMask to verify wallet ownership.`);
       const signature = await signer.signMessage(message);
@@ -135,7 +135,7 @@ export class AppComponent {
         alert('Authentication error: Please log in again.');
         return;
       }
-      
+
       this.paymentService.connectWalletBackend({ message, signature }, token).subscribe({
         next: (response) => {
           this.walletAddress = address; // Use the address we just connected
@@ -147,14 +147,14 @@ export class AppComponent {
           console.error('Wallet Verification Failed:', error);
           if (error.status === 401) {
             alert('Verification Failed: Session expired. Please log in again.');
-          } else if (error.status === 409) {
+        } else if (error.status === 409) {
             alert('Wallet already linked to an account.');
           } else {
             alert(`Wallet Verification Failed: ${error.message || 'Check console for details.'}`);
           }
         }
       });
-      
+
     } catch (error: any) {
       console.error('Wallet connection or signing rejected/failed:', error);
       this.walletAddress = null;
@@ -173,7 +173,7 @@ export class AppComponent {
     this.showAddressBox = false;
     console.error('Wallet disconnected!');
   }
-  
+
   // -------------------------------------------------------------------
   // --- API METHODS (Rest unchanged) ---
   // -------------------------------------------------------------------
@@ -220,7 +220,7 @@ export class AppComponent {
       phone_number: this.phone_number,
       password: this.password
     };
-    
+
     this.paymentService.userRegister(payload).pipe(
       catchError(err => {
         console.error('Registration error:', err);
@@ -255,7 +255,7 @@ export class AppComponent {
       console.error('Please enter a phone number to search.');
       return;
     }
-    
+
     const token = this.getAccessToken();
     if (!token) {
       alert('You must be logged in to search for a wallet address.');
@@ -268,10 +268,10 @@ export class AppComponent {
     this.paymentService.getWalletAddressByPhone(this.searchPhoneNumber, token).pipe(
       catchError((error) => {
         this.isSearchingWallet = false;
-        
+
         if (error.status === 401) {
           alert('Unauthorized: Session expired or invalid token. Please log in again.');
-        } else if (error.status === 404 || (error.error && error.error.length === 0)) { 
+        } else if (error.status === 404 || (error.error && error.error.length === 0)) {
           console.log(`No wallet found for phone number: ${this.searchPhoneNumber}`);
         } else {
           console.error('Error during wallet lookup:', error);
@@ -290,7 +290,7 @@ export class AppComponent {
       }
     });
   }
-  
+
   lookupTransaction() {
     if (!this.transactionHashInput) {
       console.error('Please enter a transaction hash.');
@@ -323,9 +323,9 @@ export class AppComponent {
   // -------------------------------------------------------------------
   // --- UI METHODS (Rest unchanged) ---
   // -------------------------------------------------------------------
-  
+
   useAddress(address: string) {
-    console.log(`Address selected for payment: ${address}`); 
+    console.log(`Address selected for payment: ${address}`);
     alert(`Address selected: ${address}. You would typically populate a 'Send' form here.`);
   }
 
