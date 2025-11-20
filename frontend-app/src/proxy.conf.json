@@ -1,7 +1,7 @@
 {
     "/api": {
-        "target": "http://localhost:8080",
-        "secure": false,
+        "target": "https://backend-white-star-5153.fly.dev/",
+        "secure": true,
         "changeOrigin": true,
         "logLevel": "debug",
         "pathRewrite": {
