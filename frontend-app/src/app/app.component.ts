@@ -34,7 +34,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { PaymentService } from './payment.service';
 import { catchError } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
-import { NgIf, NgFor, DecimalPipe, DatePipe, NgClass } from '@angular/common'; 
+import { NgIf, NgFor, DecimalPipe, DatePipe, NgClass, CommonModule } from '@angular/common'; 
 
 @Component({
   selector: 'app-root',
@@ -44,6 +44,7 @@ import { NgIf, NgFor, DecimalPipe, DatePipe, NgClass } from '@angular/common';
     HttpClientModule,
     MatCardModule,
     MatTabsModule,
+    CommonModule,
     MatInputModule,
     MatIconModule,
     MatButtonModule,
@@ -186,6 +187,8 @@ accountPassForDelete: string = '';
       this.checkWalletConnection();
     }
   }
+  
+  
 
   checkWalletConnection() {
     const token = this.getAccessToken();
@@ -743,6 +746,9 @@ submitDeleteAccount() {
     this.recentTransactions = []; 
     this.persistWalletAddress(null);
     console.error('Wallet disconnected!');
+    
+    // --- NEW: Alert on successful disconnect ---
+    alert('Wallet disconnected successfully!');
   }
 
   showWalletAddress() {

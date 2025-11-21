@@ -4,7 +4,7 @@
   <mat-toolbar color="primary" style="display: flex; justify-content: center; font-size: 20px;">
       Effective Payment System
   </mat-toolbar>
-
+  
   <!-- Center the content vertically and push it to the right -->
   <div style="display: flex; justify-content: flex-end; align-items: center; height: 100vh;">
     <div class="center-content" style="width: 40%; padding-right: 20px;">
@@ -12,23 +12,24 @@
         <mat-card-header>
           <img mat-card-avatar src="https://cdn-icons-png.flaticon.com/512/3712/3712419.png" alt="New Avatar Image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" />
           <mat-card-title>Login/Signup</mat-card-title>
-          <mat-card-subtitle>Enter details to access the Dashboard</mat-card-subtitle>
+          <mat-card-subtitle style="color: #FFFFFF;">Enter details to access the Dashboard</mat-card-subtitle>
         </mat-card-header>
 
-        <mat-card-content>
-          <mat-tab-group #tabGroup>
+        <mat-card-content style="color:#FFFFFF">
+          <mat-tab-group #tabGroup style="color:#FFFFFF">
 
             <!-- LOGIN TAB -->
             <mat-tab label="Login">
+            
   <!-- Add spacing -->
   <div class="tab-top-spacing"></div>
 
   <div>
     <mat-form-field class="example-form-field" appearance="outline" style="margin-top: 15px;">
-      <mat-label>Email</mat-label>
-      <input matInput type="text" [(ngModel)]="email">
+      <mat-label style="color: #FFFFFF;">Email</mat-label>
+      <input matInput type="text" style="color:white" [(ngModel)]="email">
       <button *ngIf="email" matSuffix mat-icon-button aria-label="Clear" (click)="email=''">
-        <mat-icon>close</mat-icon>
+        <mat-icon style="color: #FFFFFF;">close</mat-icon>
       </button>
     </mat-form-field>
   </div>
@@ -36,29 +37,58 @@
               <div>
   <mat-form-field class="example-form-field" appearance="outline">
     <mat-label>Password</mat-label>
-    <input matInput [type]="loginPasswordVisible ? 'text' : 'password'" [(ngModel)]="password">
+    <input matInput style="color:white"[type]="loginPasswordVisible ? 'text' : 'password'" [(ngModel)]="password">
     
     <!-- Clear Button -->
     <button *ngIf="password" matSuffix mat-icon-button aria-label="Clear" (click)="password=''">
-      <mat-icon>close</mat-icon>
+      <mat-icon style="color: #FFFFFF;">close</mat-icon>
     </button>
 
     <!-- Eye Button -->
     <button matSuffix mat-icon-button aria-label="Toggle Password Visibility" 
             (click)="loginPasswordVisible = !loginPasswordVisible">
-      <mat-icon>{{ loginPasswordVisible ? 'visibility_off' : 'visibility' }}</mat-icon>
+      <mat-icon style="color: #FFFFFF;">{{ loginPasswordVisible ? 'visibility_off' : 'visibility' }}</mat-icon>
     </button>
   </mat-form-field>
 </div>
               @if (!email || !password) {
-              <button mat-button disabled>Login</button>
-              }
-              @else {
-              <!-- MODIFIED LOGIN BUTTON -->
-              <button mat-button (click)="login()" [disabled]="isAuthenticating">
-                {{ isAuthenticating ? 'Logging In...' : 'Login' }}
-              </button>
-              }
+    <button mat-stroked-button disabled 
+            style="
+                background-color: #000000; 
+                color: #007AFF; 
+                border: 2px solid #007AFF; 
+                border-radius: 30px; 
+                padding: 10px 20px; 
+                font-weight: bold; 
+                min-height: 50px; 
+                font-size: 16px;
+                opacity: 0.6; /* Dim the B1 style for visual disabled status */
+                width: 100%;
+                margin-top: 10px;">
+        Login
+    </button>
+}
+@else {
+    <button mat-raised-button 
+            (click)="login()" 
+            [disabled]="isAuthenticating"
+            style="
+                border-radius: 30px; 
+                padding: 10px 20px; 
+                font-weight: bold; 
+                min-height: 50px; 
+                font-size: 16px;
+                width: 100%;
+                margin-top: 10px;"
+            [ngStyle]="{
+                'background-color': isAuthenticating ? '#000000' : '#007AFF',
+                'color': isAuthenticating ? '#007AFF' : '#FFFFFF',
+                'border': isAuthenticating ? '2px solid #007AFF' : 'none',
+                'opacity': isAuthenticating ? '0.7' : '1' 
+            }">
+        {{ isAuthenticating ? 'Logging In...' : 'Login' }}
+    </button>
+}
             </mat-tab>
 
             <!-- REGISTER TAB -->
@@ -67,7 +97,7 @@
               <div>
                 <mat-form-field class="example-form-field" appearance="outline" style="margin-top: 15px;">
                   <mat-label>Username</mat-label>
-                  <input matInput type="text" [(ngModel)]="username2">
+                  <input matInput style="color:white" type="text" [(ngModel)]="username2">
                   @if (username2) {
                   <button matSuffix mat-icon-button aria-label="Clear" (click)="username2=''">
                     <mat-icon>close</mat-icon>
@@ -77,30 +107,30 @@
               </div>
               <div>
                 <mat-form-field class="example-form-field" appearance="outline">
-                  <mat-label>Email</mat-label>
-                  <input matInput type="text" [(ngModel)]="email">
+                  <mat-label style="color: #FFFFFF;">Email</mat-label>
+                  <input matInput style="color:white" type="text" [(ngModel)]="email">
                   @if (email) {
                   <button matSuffix mat-icon-button aria-label="Clear" (click)="email=''">
-                    <mat-icon>close</mat-icon>
+                    <mat-icon style="color: #FFFFFF;">close</mat-icon>
                   </button>
                   }
                 </mat-form-field>
               </div>
                             <div>
                 <mat-form-field class="example-form-field" appearance="outline">
-                  <mat-label>Ph. No.</mat-label>
-                  <input matInput type="text" [(ngModel)]="phone_number">
+                  <mat-label style="color: #FFFFFF;">Ph. No.</mat-label>
+                  <input matInput style="color:white" type="text" [(ngModel)]="phone_number">
                   @if (phone_number) {
                   <button matSuffix mat-icon-button aria-label="Clear" (click)="phone_number=''">
-                    <mat-icon>close</mat-icon>
+                    <mat-icon style="color: #FFFFFF;">close</mat-icon>
                   </button>
                   }
                 </mat-form-field>
               </div>
               <div>
   <mat-form-field class="example-form-field" appearance="outline">
-    <mat-label>Password</mat-label>
-    <input matInput [type]="registerPasswordVisible ? 'text' : 'password'" [(ngModel)]="password">
+    <mat-label style="color: #FFFFFF;">Password</mat-label>
+    <input matInput style="color:white" [type]="registerPasswordVisible ? 'text' : 'password'" [(ngModel)]="password">
     
     <!-- Clear Button -->
     <button *ngIf="password" matSuffix mat-icon-button aria-label="Clear" (click)="password=''">
@@ -110,19 +140,46 @@
     <!-- Eye Button -->
     <button matSuffix mat-icon-button aria-label="Toggle Password Visibility" 
             (click)="registerPasswordVisible = !registerPasswordVisible">
-      <mat-icon>{{ registerPasswordVisible ? 'visibility_off' : 'visibility' }}</mat-icon>
+      <mat-icon style="color: #FFFFFF;">{{ registerPasswordVisible ? 'visibility_off' : 'visibility' }}</mat-icon>
     </button>
   </mat-form-field>
 </div>
               @if (!username2 || !email || !password) {
-              <button mat-button disabled>Register</button>
-              }
-              @else {
-              <!-- MODIFIED REGISTER BUTTON -->
-              <button mat-button (click)="register()" [disabled]="isAuthenticating">
-                 {{ isAuthenticating ? 'Registering...' : 'Register' }}
-              </button>
-              }
+    <button mat-stroked-button disabled 
+            style="background-color: #000000; 
+                   color: #007AFF; 
+                   border: 2px solid #007AFF; 
+                   border-radius: 30px; 
+                   padding: 10px 20px; 
+                   font-weight: bold; 
+                   min-height: 50px; 
+                   font-size: 16px;
+                   opacity: 0.6;
+                   width: 100%;
+                   margin-top: 10px;">
+        Register
+    </button>
+}
+@else {
+    <button mat-raised-button 
+            (click)="register()" 
+            [disabled]="isAuthenticating"
+            style="border-radius: 30px; 
+                   padding: 10px 20px; 
+                   font-weight: bold; 
+                   min-height: 50px; 
+                   font-size: 16px;
+                   width: 100%;
+                   margin-top: 10px;"
+            [ngStyle]="{
+                'background-color': isAuthenticating ? '#000000' : '#007AFF',
+                'color': isAuthenticating ? '#007AFF' : '#FFFFFF',
+                'border': isAuthenticating ? '2px solid #007AFF' : 'none',
+                'opacity': isAuthenticating ? '0.7' : '1' 
+            }">
+        {{ isAuthenticating ? 'Registering...' : 'Register' }}
+    </button>
+}
             </mat-tab>
           </mat-tab-group>
         </mat-card-content>
@@ -141,12 +198,31 @@
     Welcome {{ username || 'User' }}
   </div>
   <div style="margin-left: auto; display: flex; gap: 10px;">
-  <button mat-button color="accent" (click)="manageAccount()">
+  <button mat-raised-button 
+    (click)="manageAccount()"
+    style="
+        background-color: #007AFF; 
+        color: #FFFFFF; 
+        border-radius: 30px; 
+        padding: 6px 15px; 
+        font-weight: bold; 
+        font-size: 14px;
+        min-height: 38px;
+        margin-right: 10px;">
     Manage
-  </button>
-  <button mat-button color="accent" (click)="currentPage='login'">
+</button>
+<button mat-raised-button 
+    (click)="currentPage='login'"
+    style="
+        background-color: #007AFF; 
+        color: #FFFFFF; 
+        border-radius: 30px; 
+        padding: 6px 15px; 
+        font-weight: bold; 
+        font-size: 14px;
+        min-height: 38px;">
     Logout
-  </button>
+</button>
   </div>
 </mat-toolbar>
 
@@ -167,25 +243,34 @@
           <!-- Input Field -->
           <mat-form-field appearance="outline" style="width: 100%;">
             <mat-label>Enter Phone Number</mat-label>
-            <input matInput type="text" [(ngModel)]="searchPhoneNumber" placeholder="e.g., +91 98765 43210">
+            <input matInput type="text" style="color: #ffffff;"[(ngModel)]="searchPhoneNumber" placeholder="e.g., +91 98765 43210">
             @if (searchPhoneNumber) {
               <button matSuffix mat-icon-button aria-label="Clear" (click)="searchPhoneNumber=''">
-                <mat-icon>close</mat-icon>
+                <mat-icon style="color: #ffffff;">close</mat-icon>
               </button>
             }
           </mat-form-field>
 
           <!-- Search Button (Now full width below the input) -->
-          <button mat-raised-button color="primary" 
-                  style="width: 100%;"
-                  [disabled]="!searchPhoneNumber || isSearchingWallet"
-                  (click)="searchWalletAddress()">
-            @if (isSearchingWallet) {
-              Searching...
-            } @else {
-              Search
-            }
-          </button>
+         <button mat-raised-button 
+    style="width: 100%; 
+           border-radius: 30px; 
+           padding: 10px 20px; 
+           font-weight: bold; 
+           min-height: 50px; 
+           font-size: 16px;"
+    [disabled]="!searchPhoneNumber || isSearchingWallet"
+    [ngStyle]="{
+        'color': (!searchPhoneNumber || isSearchingWallet) ? '#BBBBBB' : '#FFFFFF',
+        'background-color': (!searchPhoneNumber || isSearchingWallet) ? 'rgba(0, 122, 255, 0.3)' : '#007AFF'
+    }"
+    (click)="searchWalletAddress()">
+    @if (isSearchingWallet) {
+        Searching...
+    } @else {
+        Search
+    }
+</button>
         </div>
 
         <!-- Result Display Area -->
@@ -194,7 +279,7 @@
             <p aria-busy="true" style="text-align: center;">Searching...</p>
           } @else if (searchedWalletAddress && searchedWalletAddress.length > 0) {
             <p style="margin-bottom: 10px;">Click an address to use:</p>
-            <div class="address-scroll-wrapper" style="border: 1px solid #ccc; border-radius: 5px; background-color: white;">
+            <div class="address-scroll-wrapper" style="border: 1px solid #ccc; border-radius: 5px; background-color: white; color:black">
               @for (addr of searchedWalletAddress; track addr.address) {
                 <div 
                   style="padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; font-family: monospace; word-break: break-all;"
@@ -218,8 +303,8 @@
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; flex:1;">
       
       <!-- MODIFIED: ACCOUNT BALANCE CARD -->
-      <mat-card style="display:flex; flex-direction:column; justify-content:center; align-items:center; background-color: #f1c6b5;">
-        <mat-card-title>
+      <mat-card style="display:flex; margin-left: 15px ; flex-direction:column; justify-content:center; align-items:center; background-color: #f1c6b5;">
+        <mat-card-title style="margin-top: 10px;">
           Account Balance
         </mat-card-title>
         
@@ -228,8 +313,8 @@
           <!-- Dropdown for Currency Selection -->
           <div style="margin: 10px 0; width: 100%; max-width: 200px; margin: 10px auto;">
               <mat-form-field appearance="outline" style="width: 100%;">
-                  <mat-label>Convert To</mat-label>
-                  <mat-select [(ngModel)]="selectedFiatCurrency">
+                  <mat-label style="color: #ffffff;">Convert To</mat-label>
+                  <mat-select style="color: #ffffff;"[(ngModel)]="selectedFiatCurrency">
                     @for (currency of fiatCurrencies; track currency.code) {
                       <mat-option [value]="currency.code">{{ currency.code }}</mat-option>
                     }
@@ -243,7 +328,7 @@
             <!-- ETH Balance (Always displayed if connected) -->
             <div style="text-align: center; padding: 5px;">
               @if (walletAddress && ethBalance !== null) {
-                  <h1 style="color:rgb(210, 176, 25); margin: 0; font-size: 36px;">
+                  <h1 style="color:#007AFF; margin: 0; font-size: 36px;">
                       {{ ethBalance | number: '1.4-8' }}
                   </h1>
                   <span style="color: gray; font-size: 16px;">ETH</span>
@@ -259,7 +344,7 @@
             <!-- Converted Fiat Value (NEW) -->
             @if (walletAddress && ethBalance !== null) {
                 <div style="text-align: center; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px; width: 80%;">
-                  <h2 style="color:green; margin: 0; font-size: 28px;">
+                  <h2 style="color:#ffffff; margin: 0; font-size: 28px;">
                     {{ convertedBalance.symbol }} {{ convertedBalance.value }}
                   </h2>
                   <span style="color: gray; font-size: 16px;">{{ selectedFiatCurrency }}</span>
@@ -269,37 +354,53 @@
           </div>
           
           <!-- Refresh Button -->
-          @if (walletAddress) {
-            <button mat-stroked-button color="primary" (click)="fetchWalletBalance()" 
-                    style="margin-top: 15px; width: 80%;">
-              <mat-icon>refresh</mat-icon> Refresh Balance
-            </button>
-          }
+         @if (walletAddress) {
+    <button mat-stroked-button 
+            (click)="fetchWalletBalance()" 
+            style="margin-top: 15px; width: 80%;
+                   flex: 1; 
+                   background-color: #000000; 
+                   color: #007AFF; 
+                   border: 2px solid #007AFF; 
+                   border-radius: 30px; 
+                   padding: 10px 20px; 
+                   font-weight: bold; 
+                   min-height: 50px; 
+                   font-size: 16px;">
+        <mat-icon>refresh</mat-icon> Refresh Balance
+    </button>
+}
 
         </mat-card-content>
       </mat-card>
 
 
       <!-- RECENT TRANSACTIONS -->
-      <mat-card>
-  <mat-card-title style="text-align:center;">Recent Transactions</mat-card-title>
+      <mat-card style="margin-right: 15px;">
+  <mat-card-title style="text-align:center;margin-top: 10px;">Recent Transactions</mat-card-title>
   <mat-card-content class="transactions-scroll"> 
-    <div *ngIf="recentTransactions.length === 0" style="text-align:center; opacity:0.7;">
+    <div *ngIf="recentTransactions.length === 0" style="text-align:center; opacity:0.7; color: rgb(255, 255, 255);">
       No recent transactions.
     </div>
 
-      <div *ngFor="let tx of recentTransactions" class="tx-card">
-        <div class="tx-row">
-          <strong>{{ tx.amount  }} ETH</strong>
+<div *ngFor="let tx of recentTransactions" class="tx-card" 
+    style="background-color: #000000; 
+           border: 2px solid #007AFF; 
+           color: #FFFFFF; 
+           border-radius: 12px; 
+           margin-bottom: 12px;
+           margin-right: 15px;">
+          <div class="tx-row" style="color:rgb(255, 255, 255)">
+          <strong style="color:#FFFFFF">{{ tx.amount  }} ETH</strong>
           <span class="status-badge" [class.completed]="tx.status === 'completed'" 
                                      [class.failed]="tx.status === 'failed'">
             {{ tx.status }}
           </span>
         </div>
 
-        <div class="tx-sub">To: {{ tx.to_address }}</div>
-        <div class="tx-sub">Hash: {{ tx.transaction_hash }}</div>
-        <div class="tx-date">{{ tx.created_at | date:'medium' }}</div>
+        <div class="tx-sub" style="color:#FFFFFF">To: {{ tx.to_address }}</div>
+        <div class="tx-sub" style="color:#FFFFFF">Hash: {{ tx.transaction_hash }}</div>
+        <div class="tx-date" style="color:#FFFFFF">{{ tx.created_at | date:'medium' }}</div>
       </div>
     
   </mat-card-content>
@@ -323,9 +424,18 @@
         Manage Account
       </div>
       <div style="margin-left: auto;">
-        <button mat-button color="accent" (click)="currentPage='dashboard'">
-          Back
-        </button>
+        <button mat-stroked-button 
+    (click)="currentPage='dashboard'"
+    style="background-color: #000000; 
+           color: #007AFF; 
+           border: 2px solid #007AFF; 
+           border-radius: 30px; 
+           padding: 6px 15px; 
+           font-weight: bold; 
+           font-size: 14px; 
+           min-height: 38px;">
+    Back
+</button>
       </div>
     </mat-toolbar>
 
@@ -337,49 +447,80 @@
         <mat-card-title style="font-size:26px; font-weight:bold; margin-bottom:25px;">
           Account Settings
         </mat-card-title>
-<mat-card-content style="display:flex; flex-direction:column; gap:20px; align-items:center; width:100%; max-width:400px; margin:auto;">
+<mat-card-content style="display:flex; justify-content: center; flex-direction:column; gap:20px; align-items:center; width:100%; max-width:400px; margin:auto;">
 
   <!-- Change Password -->
-  <button mat-raised-button color="primary" (click)="openChangePasswordForm()">Change Password</button>
+  <button mat-raised-button 
+    (click)="openChangePasswordForm()"
+    style="background-color: #007AFF; 
+           color: #FFFFFF; 
+           border-radius: 30px; 
+           padding: 10px 20px; 
+           font-weight: bold; 
+           min-height: 50px; 
+           font-size: 16px;
+           min-width: 220px;">
+    Change Password
+</button>
   <div *ngIf="showChangePasswordForm" style="display:flex; flex-direction:column; gap:12px; width:100%;">
     <mat-form-field appearance="outline" style="width:100%;">
       <mat-label>Old Password</mat-label>
-      <input matInput type="password" [(ngModel)]="oldPassword">
+      <input matInput style="color: #ffffff;" type="password" [(ngModel)]="oldPassword">
     </mat-form-field>
 
     <mat-form-field appearance="outline" style="width:100%;">
       <mat-label>New Password</mat-label>
-      <input matInput type="password" [(ngModel)]="newPassword">
+      <input matInput style="color: #ffffff;" type="password" [(ngModel)]="newPassword">
     </mat-form-field>
 
     <button mat-raised-button color="accent" (click)="submitChangePassword()">Submit</button>
   </div>
 
   <!-- Update Email -->
-  <button mat-raised-button color="primary" (click)="openUpdateEmailForm()">Change Email</button>
+  <button mat-raised-button 
+    (click)="openUpdateEmailForm()"
+    style="background-color: #007AFF; 
+           color: #FFFFFF; 
+           border-radius: 30px; 
+           padding: 10px 20px; 
+           font-weight: bold; 
+           min-height: 50px; 
+           font-size: 16px;
+           min-width: 220px;">
+    Change Email
+</button>
   <div *ngIf="showUpdateEmailForm" style="display:flex; flex-direction:column; gap:12px; width:100%;">
     <mat-form-field appearance="outline" style="width:100%;">
       <mat-label>New Email</mat-label>
-      <input matInput type="email" [(ngModel)]="newEmail">
+      <input matInput style="color: #ffffff;" type="email" [(ngModel)]="newEmail">
     </mat-form-field>
 
     <mat-form-field appearance="outline" style="width:100%;">
       <mat-label>Password</mat-label>
-      <input matInput type="password" [(ngModel)]="accountPassForEmail">
+      <input matInput style="color: #ffffff;" type="password" [(ngModel)]="accountPassForEmail">
     </mat-form-field>
 
     <button mat-raised-button color="accent" (click)="submitUpdateEmail()">Submit</button>
   </div>
 
   <!-- Delete Account -->
-  <button mat-raised-button color="warn" (click)="openDeleteAccountForm()">Delete Account</button>
+  <button mat-raised-button color="warn" 
+    (click)="openDeleteAccountForm()"
+    style="border-radius: 30px; 
+           padding: 10px 20px; 
+           font-weight: bold; 
+           min-height: 50px; 
+           font-size: 16px;
+           min-width: 220px;">
+    Delete Account
+</button>
   <div *ngIf="showDeleteAccountForm" style="display:flex; flex-direction:column; gap:12px; width:100%;">
     <mat-form-field appearance="outline" style="width:100%;">
       <mat-label>Password</mat-label>
-      <input matInput type="password" [(ngModel)]="accountPassword">
+      <input matInput style="color: #ffffff;" type="password" [(ngModel)]="accountPassword">
     </mat-form-field>
 
-    <button mat-raised-button color="warn" (click)="submitDeleteAccount()">Submit</button>
+    <button mat-raised-button color="warn" style="min-width: 220px;" (click)="submitDeleteAccount()">Submit</button>
   </div>
 
         </mat-card-content>
@@ -391,28 +532,62 @@
     Wallet Settings
   </mat-card-title>
 
-  <mat-card-content style="display:flex; flex-direction:column; gap:20px; align-items:center;">
-
+  <mat-card-content style="display:flex; justify-content: center; flex-direction:column; gap:20px; align-items:center; width:100%; max-width:400px; margin:auto;">
     <!-- Connect to MetaMask (website) -->
-    <button mat-raised-button color="primary" style="min-width:220px;"
-            (click)="connectMetamask()" [disabled]="walletAddress">
-      Connect to MetaMask
-    </button>
+<button mat-raised-button 
+    (click)="connectMetamask()" 
+    [disabled]="walletAddress"
+    style="min-width:220px;
+           border-radius: 30px; 
+           padding: 10px 20px; 
+           font-weight: bold; 
+           min-height: 50px; 
+           font-size: 16px;"
+    [ngStyle]="{
+        'background-color': walletAddress ? '#000000' : '#007AFF',
+        'color': walletAddress ? '#007AFF' : '#FFFFFF',
+        'border': walletAddress ? '2px solid #007AFF' : 'none',
+        'opacity': walletAddress ? '0.7' : '1'
+    }">
+    Connect to MetaMask
+</button>
 
     <!-- Disconnect Wallet -->
-    <button mat-raised-button color="warn" style="min-width:220px;"
-            (click)="disconnectMetamask()">
-      Disconnect Wallet
-    </button>
+    <button mat-raised-button 
+    (click)="disconnectMetamask()"
+    [disabled]="!walletAddress"
+    style="min-width:220px;
+           border-radius: 30px; 
+           padding: 10px 20px; 
+           font-weight: bold; 
+           min-height: 50px; 
+           font-size: 16px;"
+    [ngStyle]="{
+        'background-color': walletAddress ? '#007AFF' : '#000000',
+        'color': walletAddress ? '#FFFFFF' : '#007AFF',
+        'border': walletAddress ? 'none' : '2px solid #007AFF',
+        'opacity': walletAddress ? '1' : '0.7'
+    }">
+    Disconnect Wallet
+</button>
 
     <!-- Show Wallet Address -->
     <button mat-raised-button 
-                [color]="showAddressBox ? 'warn' : 'accent'"
-                style="min-width:220px;"
-                (click)="toggleWalletAddressDisplay()"
-                [disabled]="!walletAddress && !showAddressBox">
-            {{ showAddressBox ? 'Hide Wallet Address' : 'Show Wallet Address' }}
-        </button>
+    style="min-width:220px;
+           border-radius: 30px; 
+           padding: 10px 20px; 
+           font-weight: bold; 
+           min-height: 50px; 
+           font-size: 16px;"
+    (click)="toggleWalletAddressDisplay()"
+    [disabled]="!walletAddress && !showAddressBox"
+    [ngStyle]="{
+        'background-color': walletAddress && !showAddressBox ? '#007AFF' : '#000000',
+        'color': walletAddress && !showAddressBox ? '#FFFFFF' : '#007AFF',
+        'border': walletAddress && !showAddressBox ? 'none' : '2px solid #007AFF',
+        'opacity': (!walletAddress && !showAddressBox) ? '0.5' : '1'    }">
+    {{ showAddressBox ? 'Hide Wallet Address' : 'Show Wallet Address' }}
+</button>
 
         @if (showAddressBox && walletAddress) {
             <div style="

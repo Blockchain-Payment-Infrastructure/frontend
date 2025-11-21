@@ -56,6 +56,24 @@
   border-radius: 3px;
 }
 
+.dark-tab-labels ::ng-deep {
+    /* Set ALL tab label text color to white */
+    .mat-mdc-tab-label {
+        color: #FFFFFF !important;
+        opacity: 0.8; 
+    }
+
+    /* Set the ACTIVE tab text color (Login) */
+    .mat-mdc-tab-label-active {
+        color: #FFFFFF !important;
+        opacity: 1;
+    }
+
+    /* Set the active indicator line color to the accent blue */
+    .mat-mdc-tab-header-pagination-controls .mat-mdc-tab-header-indicator {
+        background-color: #007AFF !important;
+    }
+}
   .center-content {
     text-align: -webkit-center;
   }

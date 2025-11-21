@@ -1,7 +1,57 @@
 /* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=TASA+Explorer:wght@400..800&display=swap');
 
-html, body { height: 100%;  background-color: #f0f4f8; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+$primary-color: #BB86FC;
+$accent-color: #03DAC6;
+$background-color: #121212;
+$card-background: #1E1E1E;
+$text-primary: #FFFFFF;
+$text-secondary: #B0B0B0;
+$error-color: #CF6679;
+$success-color: #00C853;
+
+
+html, body { height: 100%; color: #FFFFFF;   background-color: #f0f4f8; font-family: 'TASA Explorer', 'TASA Explorer' , 'TASA Explorer' !important ;}
+h1, h2, h3, h4, h5, h6, label, mat-label, mat-toolbar, mat-card-title, mat-card-subtitle, mat-tab-label, button {
+  font-family: 'TASA Explorer', 'TASA Explorer' , 'TASA Explorer' !important ; color: #FFFFFF;  
+}
+body { margin: 0; font-family: 'TASA Explorer', 'TASA Explorer' , 'TASA Explorer'; color: #B0B0B0;   }//"Helvetica Neue"
+
+body {
+  background-color: $background-color;
+  color: $text-primary;
+  font-family: 'Poppins', 'Helvetica Neue', sans-serif;
+}
+
+mat-toolbar {
+  background-color: #1F1B24 !important;
+  color: $text-primary !important;
+}
+
+mat-card {
+  background-color: $card-background !important;
+  color: $text-primary !important;
+}
+
+button.mat-raised-button {
+  background-color: $primary-color !important;
+  color: #121212 !important;
+}
+
+button.mat-stroked-button {
+  color: $primary-color !important;
+  border-color: $primary-color !important;
+}
+
+/* Muted text */
+mat-card-subtitle, .tx-sub, .tx-date {
+  color: $text-secondary;
+}
+
+/* Error / Success text */
+.status-badge.failed { background: $error-color; color: #fff; }
+.status-badge.completed { background: $success-color; color: #fff; }
+
 .tx-card {
   padding: 12px;
   margin-bottom: 10px;
