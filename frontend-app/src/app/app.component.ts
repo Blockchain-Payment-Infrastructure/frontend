@@ -1,9 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AuthResponse, WalletAddress } 
+import { AuthResponse, WalletAddress, TransactionRecord } 
   from "./payment.service";
 
-// Locally define the ExchangeRates type since it is not exported from payment.service.ts
+// Locally define the ExchangeRates type 
 type ExchangeRates = {
   ethereum: {
     usd: number;
@@ -14,7 +14,6 @@ type ExchangeRates = {
   };
 };
 import { ethers } from 'ethers'; 
-import { MatDialogModule } from '@angular/material/dialog'; 
 
 // --- MATERIAL IMPORTS ---
 import { MatCardModule } from '@angular/material/card';
@@ -26,17 +25,16 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatRadioModule } from '@angular/material/radio';
-import { MatSelectModule } from '@angular/material/select'; // Added MatSelectModule
+import { MatSelectModule } from '@angular/material/select'; 
+import { MatListModule } from '@angular/material/list'; 
+import { MatDialogModule } from '@angular/material/dialog'; 
 
 // --- API SERVICE IMPORTS ---
 import { HttpClientModule } from '@angular/common/http';
 import { PaymentService } from './payment.service';
 import { catchError } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
-import { DecimalPipe } from '@angular/common'; // NEW: For number pipe in HTML
-
-// Define expected data structure
-type TransactionDetails = { txHash: string, status: string, amount: number } | null;
+import { NgIf, NgFor, DecimalPipe, DatePipe, NgClass } from '@angular/common'; 
 
 @Component({
   selector: 'app-root',
@@ -52,17 +50,47 @@ type TransactionDetails = { txHash: string, status: string, amount: number } | n
     MatToolbarModule,
     MatProgressBarModule,
     MatRadioModule,
-    MatSelectModule, // Imported MatSelectModule
+    MatSelectModule, 
     MatTableModule,
     MatDialogModule,
-    DecimalPipe // Imported DecimalPipe
+    MatListModule, 
+    DecimalPipe, 
+    DatePipe,
+    NgClass,
+    NgIf,
+    NgFor
   ],
   providers: [PaymentService],
   templateUrl: './app.component.html',
+  styles: [`
+    .status-pill {
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .status-completed { background-color: #e8f5e9; color: #388e3c; border: 1px solid #388e3c; }
+    .status-pending { background-color: #fff3e0; color: #ff9800; border: 1px solid #ff9800; }
+    .status-failed { background-color: #ffebee; color: #e53935; border: 1px solid #e53935; }
+    .tx-hash { font-family: monospace; font-size: 11px; color: #666; word-break: break-all; }
+    .address-small { font-size: 12px; color: #999; word-break: break-all; }
+    /* Added responsiveness for the dashboard layout */
+    @media (max-width: 900px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .center-content {
+        width: 90% !important;
+        padding-right: 0 !important;
+        justify-content: center !important;
+      }
+    }
+  `],
   styleUrls: ['./app.component.scss']
 })
 
-export class AppComponent implements OnInit { // MODIFIED: Added OnInit
+export class AppComponent implements OnInit { 
   title = 'demo';
 
   @ViewChild('tabGroup') tabGroup!: MatTabGroup;
@@ -79,6 +107,10 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
   // DASHBOARD STATE & DATA
   walletAddress: string | null = null;
   showAddressBox: boolean = false;
+  
+  // --- FIX: Explicitly defined recentTransactions and isFetchingTransactions ---
+recentTransactions: TransactionRecord[] = [];
+  isFetchingTransactions: boolean = false;
 
   // Helper: persist wallet address
   private persistWalletAddress(address: string | null) {
@@ -93,7 +125,7 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
     return localStorage.getItem('walletAddress');
   }
   
-  // NEW: BALANCE AND CURRENCY STATE
+  // BALANCE AND CURRENCY STATE
   ethBalance: number | null = null;
   exchangeRates: ExchangeRates | null = null;
   selectedFiatCurrency: 'USD' | 'INR' | 'GBP' | 'EUR' = 'USD';
@@ -104,10 +136,10 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
     { code: 'EUR', symbol: '€' },
   ];
   
-  // FIXED: Missing property declarations for Payment Modal Form
+  // Payment Modal Form State
   showPaymentModal: boolean = false; 
   recipientAddress: string | null = null; 
-  paymentAmount: number | null = null;    
+  paymentAmount: number | null = null;     
   paymentDescription: string = ''; 
   isProcessingPayment: boolean = false; 
 
@@ -117,64 +149,63 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
   isSearchingWallet: boolean = false;
   
   // API STATE
-  transactionHashInput: string = '';
-  transactionDetails: TransactionDetails = null;
-  isLoadingTransaction: boolean = false;
   isAuthenticating: boolean = false;
 
   constructor(private paymentService: PaymentService) { }
 
-  // NEW: Angular Lifecycle Hook to load rates on start
   ngOnInit() {
     this.fetchExchangeRates();
-    // On init, restore wallet address from localStorage if present
+    this.loadRecentTransactions();
     const persisted = this.getPersistedWalletAddress();
     if (persisted) {
       this.walletAddress = persisted;
     }
-    // If user is already logged in (token exists), check wallet connection
     if (this.userAccessToken) {
       this.checkWalletConnection();
     }
   }
 
-  // Call this after login as well
   checkWalletConnection() {
     const token = this.getAccessToken();
     if (!token) return;
+    
     this.paymentService.getWalletBalances(token).subscribe({
       next: async (addresses: string[]) => {
         if (addresses && addresses.length > 0) {
           const backendAddress = addresses[0];
-          // Check MetaMask for the same address
+          
+          this.walletAddress = backendAddress;
+          this.persistWalletAddress(backendAddress);
+          this.fetchWalletBalance();
+          this.fetchRecentTransactions(); 
+          
           const provider = this.getProvider();
-          let metaMaskAddress: string | null = null;
           if (provider) {
             try {
               const signer = await provider.getSigner();
-              metaMaskAddress = await signer.getAddress();
-            } catch {}
+              const metaMaskAddress = await signer.getAddress();
+              if (metaMaskAddress.toLowerCase() !== backendAddress.toLowerCase()) {
+                alert('MetaMask is not connected to the same wallet as your account. Please switch MetaMask to: ' + backendAddress);
+              }
+            } catch (e) {
+              console.warn('Could not check MetaMask address. It might be locked or disconnected.');
+            }
           }
-          this.walletAddress = backendAddress;
-          this.persistWalletAddress(backendAddress);
-          if (metaMaskAddress && metaMaskAddress.toLowerCase() !== backendAddress.toLowerCase()) {
-            alert('MetaMask is not connected to the same wallet as your account. Please switch MetaMask to: ' + backendAddress);
-          }
-          this.fetchWalletBalance();
         } else {
           this.walletAddress = null;
           this.ethBalance = null;
           this.persistWalletAddress(null);
+          this.recentTransactions = []; 
         }
       },
       error: (err) => {
         this.walletAddress = null;
         this.ethBalance = null;
         this.persistWalletAddress(null);
+        this.recentTransactions = [];
         console.error('Failed to check wallet connection:', err);
       }
     });
-  // removed extra closing brace here
   }
   
   private getAccessToken(): string | null {
@@ -188,7 +219,7 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
     return new ethers.BrowserProvider((window as any).ethereum);
   }
 
-  // NEW: Getter to calculate the converted value and symbol
+  // Getter to calculate the converted value and symbol
   get convertedBalance(): { value: string, symbol: string } {
     if (this.ethBalance === null || !this.exchangeRates) {
       return { value: 'N/A', symbol: '' };
@@ -202,7 +233,6 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
     const symbol = this.fiatCurrencies.find(c => c.code === this.selectedFiatCurrency)?.symbol || '';
     const convertedValue = (this.ethBalance * rate);
     
-    // Format to 2 decimal places for fiat, using Intl.NumberFormat for locale-appropriate separators
     const formattedValue = new Intl.NumberFormat('en-US', { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
@@ -215,7 +245,7 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
   // --- BALANCE & RATES METHODS ---
   // -------------------------------------------------------------------
   
-  // NEW: Method to fetch ETH Balance from the blockchain
+  // Method to fetch ETH Balance from the blockchain
   async fetchWalletBalance() {
     if (!this.walletAddress) {
       this.ethBalance = null;
@@ -230,10 +260,7 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
     }
     
     try {
-      // Get the balance in Wei (BigInt)
       const balanceWei = await provider.getBalance(this.walletAddress); 
-      
-      // Convert from Wei to Ether (number)
       const balanceEthString = ethers.formatEther(balanceWei);
       this.ethBalance = parseFloat(balanceEthString);
       
@@ -245,7 +272,7 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
     }
   }
   
-  // NEW: Method to fetch live exchange rates
+  // Method to fetch live exchange rates
   fetchExchangeRates() {
     this.paymentService.getExchangeRates().subscribe({
       next: (rates: ExchangeRates) => {
@@ -254,7 +281,6 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
       },
       error: (err) => {
         console.error('Failed to fetch exchange rates:', err);
-        // Fallback hardcoded rates if API fails
         this.exchangeRates = {
           ethereum: {
             usd: 3000,
@@ -267,36 +293,54 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
       }
     });
   }
-
-
-  // -------------------------------------------------------------------
-  // --- UI/MODAL METHODS ---
-  // -------------------------------------------------------------------
   
-  // MODIFIED: useAddress now opens the modal
+  // Method to fetch recent transactions from the backend
+  fetchRecentTransactions() {
+    const token = this.getAccessToken();
+    if (!token) {
+      this.recentTransactions = [];
+      return;
+    }
+
+    // Set loading state to true
+    this.isFetchingTransactions = true;
+
+    this.paymentService.getRecentTransactions(token).pipe(
+      catchError(err => {
+        console.error('Failed to fetch recent transactions:', err);
+        this.isFetchingTransactions = false;
+        return of({ payments: [] });
+      })
+    ).subscribe((response: any) => {
+      this.isFetchingTransactions = false;
+      const txArray = response?.payments || [];
+      this.recentTransactions = txArray.slice(0, 5);
+      console.log(`Fetched ${this.recentTransactions.length} recent transactions.`);
+    });
+  }
+
+
+  // -------------------------------------------------------------------
+  // --- TRANSACTION METHODS ---
+  // -------------------------------------------------------------------
+
   useAddress(address: string) {
     if (!this.walletAddress) {
       alert('Please connect your MetaMask wallet first to send payments.');
       return;
     }
     this.recipientAddress = address;
-    this.paymentAmount = null; // Clear previous amount
-    this.paymentDescription = ''; // Clear previous description
+    this.paymentAmount = null; 
+    this.paymentDescription = ''; 
     this.showPaymentModal = true;
     console.log(`Payment modal opened for recipient: ${address}`); 
   }
 
-  // FIXED: Missing method declaration for closePaymentModal
   closePaymentModal() { 
     this.showPaymentModal = false;
     this.isProcessingPayment = false;
   }
 
-  // -------------------------------------------------------------------
-  // --- TRANSACTION METHODS (New Core Logic) ---
-  // -------------------------------------------------------------------
-
-  // FIXED: Missing method declaration for sendPayment
   async sendPayment() { 
     if (!this.walletAddress) {
       alert('Wallet not connected. Please connect MetaMask.');
@@ -323,7 +367,7 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
     try {
       // 1. Prepare Ethers transaction
       const signer = await provider.getSigner();
-      const amountWei = ethers.parseEther(this.paymentAmount.toString());
+      const amountWei = ethers.parseEther(this.paymentAmount.toString()); 
 
       console.log(`Attempting to send ${this.paymentAmount} ETH to ${this.recipientAddress}...`);
       alert('Please confirm the transaction in MetaMask.');
@@ -349,23 +393,24 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
 
       // 4. Create record in backend (POST /payments)
       this.paymentService.createPaymentRecord({
-        amount: amountWei.toString(), // Send amount in Wei as string or format required by your backend
+        amount: ethers.parseEther(this.paymentAmount.toString()).toString(), 
         currency: 'ETH',
-        description: this.paymentDescription || 'No description',
+        description: this.paymentDescription || 'P2P Transfer',
         to_address: this.recipientAddress,
         transaction_hash: transactionHash,
       }, token).subscribe({
         next: (response) => {
           alert(`Success! Payment recorded by backend.`);
           this.closePaymentModal();
-          // NOTE: You would typically refresh transaction history here.
-          this.fetchWalletBalance(); // Refresh balance after successful payment
+          this.fetchWalletBalance(); 
+          this.fetchRecentTransactions(); 
         },
         error: (err) => {
           console.error('Backend recording failed:', err);
           alert('Transaction was successful on the blockchain, but failed to record on the backend.');
           this.closePaymentModal();
-          this.fetchWalletBalance(); // Refresh balance anyway
+          this.fetchWalletBalance(); 
+          this.fetchRecentTransactions(); 
         }
       });
       
@@ -373,7 +418,6 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
       this.isProcessingPayment = false;
       console.error('Payment process failed:', error);
       
-      // Handle MetaMask rejection error (code 4001)
       if (error.code === 4001) {
         alert('Transaction rejected by user in MetaMask.');
       } else if (error.message && error.message.includes('insufficient funds')) {
@@ -409,12 +453,11 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
       this.isAuthenticating = false;
 
       if (response && response.access_token) {
-        this.userAccessToken = response.access_token; // **SAVE TOKEN HERE**
+        this.userAccessToken = response.access_token; 
         this.username = this.email;
         this.password = '';
         this.currentPage = 'dashboard';
         console.log("Login Successful. Token saved.");
-        // After login, check wallet connection and fetch balance if connected
         this.checkWalletConnection();
       }
     });
@@ -462,10 +505,24 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
       }
     });
   }
+
+  loadRecentTransactions() {
+  this.paymentService.getTransactionHistory().subscribe({
+    next: (res) => {
+      this.recentTransactions = (res.payments || []).map((tx: any) => ({
+  ...tx,
+  amount_eth: tx.amount ? ethers.formatEther(tx.amount) : null,
+  transaction_hash: tx.transaction_hash || tx.hash || null
+}));
+    },
+    error: (err) => {
+      console.error("Failed to load transactions", err);
+    }
+  });
+}
+
   
-  // Wallet Connect (Updated for Signature Verification and Balance Fetch)
   async connectMetamask() {
-    // Prevent connecting if wallet is already connected
     if (this.walletAddress) {
       alert('A wallet is already connected. Please disconnect first if you want to connect a different wallet.');
       return;
@@ -486,10 +543,6 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
       const signature = await signer.signMessage(message);
 
       console.log('--- SIGNATURE VERIFICATION DATA SENT TO BACKEND ---');
-      console.log('Original Message (Text Signed):', message);
-      console.log('Generated Signature (Hex):', signature);
-      console.log('Wallet Address Used:', address);
-      console.log('----------------------------------------------------');
 
       const token = this.getAccessToken();
       if (!token) {
@@ -503,12 +556,13 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
           this.persistWalletAddress(address);
           console.log('Backend Wallet Association SUCCESSFUL. Connected Address:', response.walletAddress);
           alert(`Wallet Connected and Verified! Address: ${response.walletAddress}`);
-          // Fetch the actual balance upon successful connection
           this.fetchWalletBalance();
+          this.fetchRecentTransactions();
         },
         error: (error) => {
           this.walletAddress = null;
-          this.ethBalance = null; // Clear balance on failed connection
+          this.ethBalance = null; 
+          this.recentTransactions = [];
           console.error('Wallet Verification Failed:', error);
           if (error.status === 401) {
             alert('Verification Failed: Session expired. Please log in again.');
@@ -522,7 +576,8 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
     } catch (error: any) {
       console.error('Wallet connection or signing rejected/failed:', error);
       this.walletAddress = null;
-      this.ethBalance = null; // Clear balance on user rejection
+      this.ethBalance = null; 
+      this.recentTransactions = [];
       if (error.code === 4001) {
         alert('Connection/Signing rejected by user.');
       } else {
@@ -572,46 +627,17 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
     });
   }
   
-  lookupTransaction() {
-    if (!this.transactionHashInput) {
-      console.error('Please enter a transaction hash.');
-      return;
-    }
-
-    this.isLoadingTransaction = true;
-    this.transactionDetails = null;
-
-    this.paymentService.getTransactionDetails(this.transactionHashInput).subscribe({
-      next: (data) => {
-        this.transactionDetails = {
-          txHash: data.txHash,
-          status: data.status,
-          amount: data.amount
-        };
-        this.isLoadingTransaction = false;
-        console.log(`Transaction Status: ${data.status}`);
-      },
-      error: (err) => {
-        console.error('Error looking up transaction:', err);
-        this.transactionDetails = null;
-        this.isLoadingTransaction = false;
-        console.error('Failed to retrieve transaction details.');
-      }
-    });
-  }
-
-
   // -------------------------------------------------------------------
   // --- UI METHODS (Continued) ---
   // -------------------------------------------------------------------
   
   goToMetamaskSite() { window.open('https://metamask.io/download/', '_blank'); }
 
-  // MODIFIED: Clear balance on disconnect
   disconnectMetamask() {
     this.walletAddress = null;
     this.showAddressBox = false;
     this.ethBalance = null;
+    this.recentTransactions = []; 
     this.persistWalletAddress(null);
     console.error('Wallet disconnected!');
   }

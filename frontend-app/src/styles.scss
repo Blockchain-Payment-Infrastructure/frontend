@@ -2,3 +2,43 @@
 
 html, body { height: 100%;  background-color: #f0f4f8; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+.tx-card {
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  background: #f5f5f5;
+}
+
+.tx-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tx-sub {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.tx-date {
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.status-badge {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.status-badge.completed {
+  background: #c8f7c5;
+  color: #056608;
+}
+
+.status-badge.failed {
+  background: #f7c5c5;
+  color: #800000;
+}
+
