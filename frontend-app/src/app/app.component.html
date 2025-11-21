@@ -20,28 +20,36 @@
 
             <!-- LOGIN TAB -->
             <mat-tab label="Login">
+  <!-- Add spacing -->
+  <div class="tab-top-spacing"></div>
+
+  <div>
+    <mat-form-field class="example-form-field" appearance="outline" style="margin-top: 15px;">
+      <mat-label>Email</mat-label>
+      <input matInput type="text" [(ngModel)]="email">
+      <button *ngIf="email" matSuffix mat-icon-button aria-label="Clear" (click)="email=''">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+  </div>
+            
               <div>
-                <mat-form-field class="example-form-field">
-                  <mat-label>Email</mat-label>
-                  <input matInput type="text" [(ngModel)]="email">
-                  @if (email) {
-                  <button matSuffix mat-icon-button aria-label="Clear" (click)="email=''">
-                    <mat-icon>close</mat-icon>
-                  </button>
-                  }
-                </mat-form-field>
-              </div>
-              <div>
-                <mat-form-field class="example-form-field">
-                  <mat-label>Password</mat-label>
-                  <input matInput type="password" [(ngModel)]="password">
-                  @if (password) {
-                  <button matSuffix mat-icon-button aria-label="Clear" (click)="password=''">
-                    <mat-icon>close</mat-icon>
-                  </button>
-                  }
-                </mat-form-field>
-              </div>
+  <mat-form-field class="example-form-field" appearance="outline">
+    <mat-label>Password</mat-label>
+    <input matInput [type]="loginPasswordVisible ? 'text' : 'password'" [(ngModel)]="password">
+    
+    <!-- Clear Button -->
+    <button *ngIf="password" matSuffix mat-icon-button aria-label="Clear" (click)="password=''">
+      <mat-icon>close</mat-icon>
+    </button>
+
+    <!-- Eye Button -->
+    <button matSuffix mat-icon-button aria-label="Toggle Password Visibility" 
+            (click)="loginPasswordVisible = !loginPasswordVisible">
+      <mat-icon>{{ loginPasswordVisible ? 'visibility_off' : 'visibility' }}</mat-icon>
+    </button>
+  </mat-form-field>
+</div>
               @if (!email || !password) {
               <button mat-button disabled>Login</button>
               }
@@ -55,8 +63,9 @@
 
             <!-- REGISTER TAB -->
             <mat-tab label="Sign-up">
+              <div class="tab-top-spacing"></div>
               <div>
-                <mat-form-field class="example-form-field">
+                <mat-form-field class="example-form-field" appearance="outline" style="margin-top: 15px;">
                   <mat-label>Username</mat-label>
                   <input matInput type="text" [(ngModel)]="username2">
                   @if (username2) {
@@ -67,7 +76,7 @@
                 </mat-form-field>
               </div>
               <div>
-                <mat-form-field class="example-form-field">
+                <mat-form-field class="example-form-field" appearance="outline">
                   <mat-label>Email</mat-label>
                   <input matInput type="text" [(ngModel)]="email">
                   @if (email) {
@@ -78,27 +87,33 @@
                 </mat-form-field>
               </div>
                             <div>
-                <mat-form-field class="example-form-field">
+                <mat-form-field class="example-form-field" appearance="outline">
                   <mat-label>Ph. No.</mat-label>
                   <input matInput type="text" [(ngModel)]="phone_number">
-                  @if (email) {
-                  <button matSuffix mat-icon-button aria-label="Clear" (click)="email=''">
+                  @if (phone_number) {
+                  <button matSuffix mat-icon-button aria-label="Clear" (click)="phone_number=''">
                     <mat-icon>close</mat-icon>
                   </button>
                   }
                 </mat-form-field>
               </div>
               <div>
-                <mat-form-field class="example-form-field">
-                  <mat-label>Password</mat-label>
-                  <input matInput type="password" [(ngModel)]="password">
-                  @if (password) {
-                  <button matSuffix mat-icon-button aria-label="Clear" (click)="password=''">
-                    <mat-icon>close</mat-icon>
-                  </button>
-                  }
-                </mat-form-field>
-              </div>
+  <mat-form-field class="example-form-field" appearance="outline">
+    <mat-label>Password</mat-label>
+    <input matInput [type]="registerPasswordVisible ? 'text' : 'password'" [(ngModel)]="password">
+    
+    <!-- Clear Button -->
+    <button *ngIf="password" matSuffix mat-icon-button aria-label="Clear" (click)="password=''">
+      <mat-icon>close</mat-icon>
+    </button>
+
+    <!-- Eye Button -->
+    <button matSuffix mat-icon-button aria-label="Toggle Password Visibility" 
+            (click)="registerPasswordVisible = !registerPasswordVisible">
+      <mat-icon>{{ registerPasswordVisible ? 'visibility_off' : 'visibility' }}</mat-icon>
+    </button>
+  </mat-form-field>
+</div>
               @if (!username2 || !email || !password) {
               <button mat-button disabled>Register</button>
               }
@@ -322,11 +337,51 @@
         <mat-card-title style="font-size:26px; font-weight:bold; margin-bottom:25px;">
           Account Settings
         </mat-card-title>
+<mat-card-content style="display:flex; flex-direction:column; gap:20px; align-items:center; width:100%; max-width:400px; margin:auto;">
 
-        <mat-card-content style="display:flex; flex-direction:column; gap:20px; align-items:center;">
-          <button mat-raised-button color="primary" style="min-width:220px;">Change Password</button>
-          <button mat-raised-button color="accent" style="min-width:220px;">Update Email</button>
-          <button mat-raised-button color="warn" style="min-width:220px;">Delete Account</button>
+  <!-- Change Password -->
+  <button mat-raised-button color="primary" (click)="openChangePasswordForm()">Change Password</button>
+  <div *ngIf="showChangePasswordForm" style="display:flex; flex-direction:column; gap:12px; width:100%;">
+    <mat-form-field appearance="outline" style="width:100%;">
+      <mat-label>Old Password</mat-label>
+      <input matInput type="password" [(ngModel)]="oldPassword">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" style="width:100%;">
+      <mat-label>New Password</mat-label>
+      <input matInput type="password" [(ngModel)]="newPassword">
+    </mat-form-field>
+
+    <button mat-raised-button color="accent" (click)="submitChangePassword()">Submit</button>
+  </div>
+
+  <!-- Update Email -->
+  <button mat-raised-button color="primary" (click)="openUpdateEmailForm()">Change Email</button>
+  <div *ngIf="showUpdateEmailForm" style="display:flex; flex-direction:column; gap:12px; width:100%;">
+    <mat-form-field appearance="outline" style="width:100%;">
+      <mat-label>New Email</mat-label>
+      <input matInput type="email" [(ngModel)]="newEmail">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" style="width:100%;">
+      <mat-label>Password</mat-label>
+      <input matInput type="password" [(ngModel)]="accountPassForEmail">
+    </mat-form-field>
+
+    <button mat-raised-button color="accent" (click)="submitUpdateEmail()">Submit</button>
+  </div>
+
+  <!-- Delete Account -->
+  <button mat-raised-button color="warn" (click)="openDeleteAccountForm()">Delete Account</button>
+  <div *ngIf="showDeleteAccountForm" style="display:flex; flex-direction:column; gap:12px; width:100%;">
+    <mat-form-field appearance="outline" style="width:100%;">
+      <mat-label>Password</mat-label>
+      <input matInput type="password" [(ngModel)]="accountPassword">
+    </mat-form-field>
+
+    <button mat-raised-button color="warn" (click)="submitDeleteAccount()">Submit</button>
+  </div>
+
         </mat-card-content>
       </mat-card>
 

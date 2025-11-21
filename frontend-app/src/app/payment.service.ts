@@ -26,6 +26,24 @@
       receiver: string;
     }
 
+    interface ChangePasswordPayload {
+  old_password: string;
+  new_password: string;
+}
+
+interface UpdateEmailPayload {
+  email: string;
+  password: string;
+}
+
+interface DeleteAccountPayload {
+  password: string;
+}
+
+// --- NEW: Account Management Responses ---
+interface AccountActionResponse {
+  message: string;
+}
     // Data structure for the wallet addresses array returned by the backend
     export interface WalletAddress {
       address: string;
@@ -145,6 +163,25 @@
         return this.http.post<ConnectWalletResponse>(endpoint, payload, { headers: headers });
       }
 
+  
+
+  changePassword(payload: { old_password: string, new_password: string }, token: string | null) {
+  if (!token) return throwError(() => new Error('Missing token'));
+  const headers = { 'Authorization': `Bearer ${token}` };
+  return this.http.patch('api/account/change-password', payload, { headers });
+}
+
+updateEmail(payload: { email: string, password: string }, token: string | null) {
+  if (!token) return throwError(() => new Error('Missing token'));
+  const headers = { 'Authorization': `Bearer ${token}` };
+  return this.http.patch('api/account/update-email', payload, { headers });
+}
+
+deleteAccount(payload: { password: string }, token: string | null) {
+  if (!token) return throwError(() => new Error('Missing token'));
+  const headers = { 'Authorization': `Bearer ${token}` };
+  return this.http.request('delete', 'api/account/delete', { body: payload, headers });
+}
       /**
        * Links to the backend endpoint: POST /payments (Authenticated)
        */

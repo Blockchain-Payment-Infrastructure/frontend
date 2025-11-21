@@ -103,6 +103,10 @@ export class AppComponent implements OnInit {
   email: string = '';
   currentPage = 'login';
   private userAccessToken: string | null = null; 
+   // for delete confirmation
+isProcessingAccountAction: boolean = false;
+loginPasswordVisible: boolean = false;
+registerPasswordVisible: boolean = false;
 
   // DASHBOARD STATE & DATA
   walletAddress: string | null = null;
@@ -137,6 +141,7 @@ recentTransactions: TransactionRecord[] = [];
   ];
   
   // Payment Modal Form State
+  
   showPaymentModal: boolean = false; 
   recipientAddress: string | null = null; 
   paymentAmount: number | null = null;     
@@ -150,6 +155,23 @@ recentTransactions: TransactionRecord[] = [];
   
   // API STATE
   isAuthenticating: boolean = false;
+
+  showChangePasswordForm = false;
+showUpdateEmailForm = false;
+showDeleteAccountForm = false;
+
+// Form fields
+oldPassword = '';
+newPassword = '';
+newEmail = '';
+accountPassword = '';
+
+// FORM FIELDS
+
+accountNewEmail: string = '';
+accountPassForEmail: string = '';
+
+accountPassForDelete: string = '';
 
   constructor(private paymentService: PaymentService) { }
 
@@ -207,7 +229,82 @@ recentTransactions: TransactionRecord[] = [];
       }
     });
   }
-  
+openChangePasswordForm() { 
+  this.showChangePasswordForm = true; 
+  this.showUpdateEmailForm = false; 
+  this.showDeleteAccountForm = false; 
+}
+openUpdateEmailForm() { 
+  this.showUpdateEmailForm = true; 
+  this.showChangePasswordForm = false; 
+  this.showDeleteAccountForm = false; 
+}
+openDeleteAccountForm() { 
+  this.showDeleteAccountForm = true; 
+  this.showChangePasswordForm = false; 
+  this.showUpdateEmailForm = false; 
+}
+
+submitChangePassword() {
+  if (!this.oldPassword || !this.newPassword) {
+    alert('Please fill both fields');
+    return;
+  }
+  const token = this.getAccessToken();
+  this.paymentService.changePassword({ old_password: this.oldPassword, new_password: this.newPassword }, token)
+    .subscribe({
+      next: () => {
+        alert('Password changed successfully');
+        this.oldPassword = '';
+        this.newPassword = '';
+        this.showChangePasswordForm = false;
+      },
+      error: (err: any) => alert(`Failed to change password: ${err?.message || err.statusText}`)
+    });
+}
+
+submitUpdateEmail() {
+  if (!this.newEmail || !this.accountPassForEmail) {
+    alert('Please fill both fields');
+    return;
+  }
+
+  const token = this.getAccessToken();
+  this.paymentService.updateEmail({ email: this.newEmail, password: this.accountPassForEmail }, token)
+    .subscribe({
+      next: () => {
+        alert('Email updated successfully');
+        this.newEmail = '';
+        this.accountPassForEmail = '';
+        this.showUpdateEmailForm = false;
+      },
+      error: (err: any) => alert(`Failed to update email: ${err?.message || err.statusText}`)
+    });
+}
+
+submitDeleteAccount() {
+  if (!this.accountPassword) {
+    alert('Please enter your password');
+    return;
+  }
+  const token = this.getAccessToken();
+  this.paymentService.deleteAccount({ password: this.accountPassword }, token)
+    .subscribe({
+      next: () => {
+        alert('Account deleted successfully');
+        this.accountPassword = '';
+        this.showDeleteAccountForm = false;
+        // optional: log the user out
+        this.userAccessToken = null;
+        this.currentPage = 'login';
+      },
+      error: (err: any) => alert(`Failed to delete account: ${err?.message || err.statusText}`)
+    });
+}
+
+ 
+
+
   private getAccessToken(): string | null {
     return this.userAccessToken;
   }
