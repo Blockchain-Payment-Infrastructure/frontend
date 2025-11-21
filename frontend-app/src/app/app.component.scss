@@ -6,6 +6,56 @@
     background-image: url('https://material.angular.dev/assets/img/examples/shiba1.jpg');
     background-size: cover;
   }
+
+  /* Width of the scrollbar */
+.transactions-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* Track (background) */
+.transactions-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+  border-radius: 4px;
+}
+
+/* Handle (the moving part) */
+.transactions-scroll::-webkit-scrollbar-thumb {
+  background: #ccc; 
+  border-radius: 4px;
+}
+
+/* Handle on hover */
+.transactions-scroll::-webkit-scrollbar-thumb:hover {
+  background: #999; 
+}
+
+.transactions-scroll {
+  max-height: 400px;      // adjust as needed
+  overflow-y: auto;       // vertical scroll
+  padding-right: 4px;     // optional: prevent content hiding behind scrollbar
+}
+
+/* Optional: nicer scrollbar for webkit browsers */
+.transactions-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.address-scroll-wrapper {
+  max-height: 100px; /* Adjust height to your liking (e.g., 250px for a medium list) */
+  overflow-y: auto; 
+  padding-right: 5px; /* Add slight padding so the scrollbar doesn't hug the content */
+}
+
+/* Optional: Clean up the last item's border inside the scroll area */
+.address-scroll-wrapper > div:last-child {
+  border-bottom: none !important;
+}
+
+.transactions-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.3);
+  border-radius: 3px;
+}
+
   .center-content {
     text-align: -webkit-center;
   }

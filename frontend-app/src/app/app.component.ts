@@ -314,6 +314,12 @@ recentTransactions: TransactionRecord[] = [];
     ).subscribe((response: any) => {
       this.isFetchingTransactions = false;
       const txArray = response?.payments || [];
+      this.recentTransactions = (response.payments || []).map((tx: any) => {
+      return {
+        ...tx,
+        amount: parseFloat(tx.amount) / 1e18 // divide by 10^18 here
+      };
+    }).slice(0, 5);
       this.recentTransactions = txArray.slice(0, 5);
       console.log(`Fetched ${this.recentTransactions.length} recent transactions.`);
     });

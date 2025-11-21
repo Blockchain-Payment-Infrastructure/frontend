@@ -179,7 +179,7 @@
             <p aria-busy="true" style="text-align: center;">Searching...</p>
           } @else if (searchedWalletAddress && searchedWalletAddress.length > 0) {
             <p style="margin-bottom: 10px;">Click an address to use:</p>
-            <div style="border: 1px solid #ccc; border-radius: 5px; background-color: white;">
+            <div class="address-scroll-wrapper" style="border: 1px solid #ccc; border-radius: 5px; background-color: white;">
               @for (addr of searchedWalletAddress; track addr.address) {
                 <div 
                   style="padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; font-family: monospace; word-break: break-all;"
@@ -267,27 +267,29 @@
 
       <!-- RECENT TRANSACTIONS -->
       <mat-card>
-        <mat-card-title style="text-align:center;">Recent Transactions</mat-card-title>
-        <mat-card-content>
-          <div *ngIf="recentTransactions.length === 0" style="text-align:center; opacity:0.7;">
-  No recent transactions.
-</div>
+  <mat-card-title style="text-align:center;">Recent Transactions</mat-card-title>
+  <mat-card-content class="transactions-scroll"> 
+    <div *ngIf="recentTransactions.length === 0" style="text-align:center; opacity:0.7;">
+      No recent transactions.
+    </div>
 
-<div *ngFor="let tx of recentTransactions" class="tx-card">
-  <div class="tx-row">
-    <strong>{{ tx.amount }} ETH</strong>
-    <span class="status-badge" [class.completed]="tx.status === 'completed'" 
-                               [class.failed]="tx.status === 'failed'">
-      {{ tx.status }}
-    </span>
-  </div>
+      <div *ngFor="let tx of recentTransactions" class="tx-card">
+        <div class="tx-row">
+          <strong>{{ tx.amount  }} ETH</strong>
+          <span class="status-badge" [class.completed]="tx.status === 'completed'" 
+                                     [class.failed]="tx.status === 'failed'">
+            {{ tx.status }}
+          </span>
+        </div>
 
-  <div class="tx-sub">To: {{ tx.to_address }}</div>
-  <div class="tx-sub">Hash: {{ tx.transaction_hash }}</div>
-  <div class="tx-date">{{ tx.created_at | date:'medium' }}</div>
-</div>
-        </mat-card-content>
-      </mat-card>
+        <div class="tx-sub">To: {{ tx.to_address }}</div>
+        <div class="tx-sub">Hash: {{ tx.transaction_hash }}</div>
+        <div class="tx-date">{{ tx.created_at | date:'medium' }}</div>
+      </div>
+    
+  </mat-card-content>
+</mat-card>
+
 
     </div>
 
