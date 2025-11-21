@@ -346,7 +346,7 @@
 
     <!-- Connect to MetaMask (website) -->
     <button mat-raised-button color="primary" style="min-width:220px;"
-            (click)="connectMetamask()">
+            (click)="connectMetamask()" [disabled]="walletAddress">
       Connect to MetaMask
     </button>
 

@@ -1,3 +1,4 @@
+// ...existing code...
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs'; 
@@ -66,6 +67,19 @@ interface CreatePaymentResponse {
 export class PaymentService {
 
   constructor(private http: HttpClient) { }
+
+  /**
+   * Links to the backend endpoint: GET /wallet/balances
+   * Returns an array of wallet addresses (strings)
+   */
+  getWalletBalances(token: string | null): Observable<string[]> {
+    if (!token) {
+      return throwError(() => new Error('Missing authentication token'));
+    }
+    const headers = { 'Authorization': `Bearer ${token}` };
+    const endpoint = 'api/wallet/balances';
+    return this.http.get<string[]>(endpoint, { headers });
+  }
 
   /**
    * Links to the backend endpoint: POST /login (Assumed)

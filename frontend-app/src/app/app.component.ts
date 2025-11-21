@@ -79,6 +79,19 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
   // DASHBOARD STATE & DATA
   walletAddress: string | null = null;
   showAddressBox: boolean = false;
+
+  // Helper: persist wallet address
+  private persistWalletAddress(address: string | null) {
+    if (address) {
+      localStorage.setItem('walletAddress', address);
+    } else {
+      localStorage.removeItem('walletAddress');
+    }
+  }
+
+  private getPersistedWalletAddress(): string | null {
+    return localStorage.getItem('walletAddress');
+  }
   
   // NEW: BALANCE AND CURRENCY STATE
   ethBalance: number | null = null;
@@ -114,6 +127,54 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
   // NEW: Angular Lifecycle Hook to load rates on start
   ngOnInit() {
     this.fetchExchangeRates();
+    // On init, restore wallet address from localStorage if present
+    const persisted = this.getPersistedWalletAddress();
+    if (persisted) {
+      this.walletAddress = persisted;
+    }
+    // If user is already logged in (token exists), check wallet connection
+    if (this.userAccessToken) {
+      this.checkWalletConnection();
+    }
+  }
+
+  // Call this after login as well
+  checkWalletConnection() {
+    const token = this.getAccessToken();
+    if (!token) return;
+    this.paymentService.getWalletBalances(token).subscribe({
+      next: async (addresses: string[]) => {
+        if (addresses && addresses.length > 0) {
+          const backendAddress = addresses[0];
+          // Check MetaMask for the same address
+          const provider = this.getProvider();
+          let metaMaskAddress: string | null = null;
+          if (provider) {
+            try {
+              const signer = await provider.getSigner();
+              metaMaskAddress = await signer.getAddress();
+            } catch {}
+          }
+          this.walletAddress = backendAddress;
+          this.persistWalletAddress(backendAddress);
+          if (metaMaskAddress && metaMaskAddress.toLowerCase() !== backendAddress.toLowerCase()) {
+            alert('MetaMask is not connected to the same wallet as your account. Please switch MetaMask to: ' + backendAddress);
+          }
+          this.fetchWalletBalance();
+        } else {
+          this.walletAddress = null;
+          this.ethBalance = null;
+          this.persistWalletAddress(null);
+        }
+      },
+      error: (err) => {
+        this.walletAddress = null;
+        this.ethBalance = null;
+        this.persistWalletAddress(null);
+        console.error('Failed to check wallet connection:', err);
+      }
+    });
+  // removed extra closing brace here
   }
   
   private getAccessToken(): string | null {
@@ -353,6 +414,8 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
         this.password = '';
         this.currentPage = 'dashboard';
         console.log("Login Successful. Token saved.");
+        // After login, check wallet connection and fetch balance if connected
+        this.checkWalletConnection();
       }
     });
   }
@@ -402,6 +465,11 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
   
   // Wallet Connect (Updated for Signature Verification and Balance Fetch)
   async connectMetamask() {
+    // Prevent connecting if wallet is already connected
+    if (this.walletAddress) {
+      alert('A wallet is already connected. Please disconnect first if you want to connect a different wallet.');
+      return;
+    }
     this.showAddressBox = false;
     const provider = this.getProvider();
 
@@ -410,13 +478,10 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
       this.goToMetamaskSite();
       return;
     }
-    
     try {
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
-      
-      const message = "Connect wallet to backend service for user: " + this.username; 
-      
+      const message = "Connect wallet to backend service for user: " + this.username;
       alert(`Please sign the message in MetaMask to verify wallet ownership.`);
       const signature = await signer.signMessage(message);
 
@@ -425,22 +490,21 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
       console.log('Generated Signature (Hex):', signature);
       console.log('Wallet Address Used:', address);
       console.log('----------------------------------------------------');
-      
+
       const token = this.getAccessToken();
       if (!token) {
         alert('Authentication error: Please log in again.');
         return;
       }
-      
+
       this.paymentService.connectWalletBackend({ message, signature }, token).subscribe({
         next: (response) => {
           this.walletAddress = address;
+          this.persistWalletAddress(address);
           console.log('Backend Wallet Association SUCCESSFUL. Connected Address:', response.walletAddress);
           alert(`Wallet Connected and Verified! Address: ${response.walletAddress}`);
-          
-          // NEW: Fetch the actual balance upon successful connection
+          // Fetch the actual balance upon successful connection
           this.fetchWalletBalance();
-          
         },
         error: (error) => {
           this.walletAddress = null;
@@ -455,7 +519,6 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
           }
         }
       });
-      
     } catch (error: any) {
       console.error('Wallet connection or signing rejected/failed:', error);
       this.walletAddress = null;
@@ -549,6 +612,7 @@ export class AppComponent implements OnInit { // MODIFIED: Added OnInit
     this.walletAddress = null;
     this.showAddressBox = false;
     this.ethBalance = null;
+    this.persistWalletAddress(null);
     console.error('Wallet disconnected!');
   }
 
