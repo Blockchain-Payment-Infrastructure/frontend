@@ -2,7 +2,7 @@
 @if (currentPage === 'login') {
   <!-- Top Toolbar -->
   <mat-toolbar color="primary" style="display: flex; justify-content: center; font-size: 20px;">
-    Absolute Dogshit
+      Effective Payment System
   </mat-toolbar>
 
   <!-- Center the content vertically and push it to the right -->
@@ -202,25 +202,67 @@
     <!-- BOTTOM TWO CARDS SIDE BY SIDE -->
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; flex:1;">
       
-      <!-- ACCOUNT BALANCE (Hardcoded as requested) -->
-<mat-card style="display:flex; flex-direction:column; justify-content:center; align-items:center; background-color: #f1c6b5;">
-  <mat-card-title>Account Balance</mat-card-title>
-  <mat-card-content style="text-align:center; width: 100%;">
-    
-    <!-- Horizontal row for Rupee & BTC values (Original Hardcoded values) -->
-    <div style="display: flex; justify-content: space-around; align-items: center; margin: 15px 0;">
-      <div style="flex: 1; text-align: center; border-right: 1px solid #ccc; padding: 5px;">
-        <h1 style="color:green; margin: 0; font-size: 36px;">₹ 1,24,500</h1>
-        <span style="color: gray; font-size: 16px;">INR</span>
-      </div>
-      <div style="flex: 1; text-align: center; padding: 5px;">
-        <h1 style="color:rgb(210, 176, 25); margin: 0; font-size: 36px;">0.5432</h1>
-        <span style="color: gray; font-size: 16px;">BTC</span>
-      </div>
-    </div>
+      <!-- MODIFIED: ACCOUNT BALANCE CARD -->
+      <mat-card style="display:flex; flex-direction:column; justify-content:center; align-items:center; background-color: #f1c6b5;">
+        <mat-card-title>
+          Account Balance
+        </mat-card-title>
+        
+        <mat-card-content style="text-align:center; width: 100%;">
+          
+          <!-- Dropdown for Currency Selection -->
+          <div style="margin: 10px 0; width: 100%; max-width: 200px; margin: 10px auto;">
+              <mat-form-field appearance="outline" style="width: 100%;">
+                  <mat-label>Convert To</mat-label>
+                  <mat-select [(ngModel)]="selectedFiatCurrency">
+                    @for (currency of fiatCurrencies; track currency.code) {
+                      <mat-option [value]="currency.code">{{ currency.code }}</mat-option>
+                    }
+                  </mat-select>
+              </mat-form-field>
+          </div>
 
-  </mat-card-content>
-</mat-card>
+          <!-- Main Balance Display -->
+          <div style="display: flex; justify-content: center; align-items: center; margin: 15px 0; flex-direction: column; gap: 10px;">
+            
+            <!-- ETH Balance (Always displayed if connected) -->
+            <div style="text-align: center; padding: 5px;">
+              @if (walletAddress && ethBalance !== null) {
+                  <h1 style="color:rgb(210, 176, 25); margin: 0; font-size: 36px;">
+                      {{ ethBalance | number: '1.4-8' }}
+                  </h1>
+                  <span style="color: gray; font-size: 16px;">ETH</span>
+              } @else if (walletAddress && ethBalance === null) {
+                  <h1 style="color: gray; margin: 0; font-size: 24px;">Fetching...</h1>
+                  <span style="color: gray; font-size: 16px;">ETH</span>
+              } @else {
+                  <h1 style="color: red; margin: 0; font-size: 24px;">Wallet Not Connected</h1>
+                  <span style="color: gray; font-size: 16px;">Connect on Manage Account</span>
+              }
+            </div>
+
+            <!-- Converted Fiat Value (NEW) -->
+            @if (walletAddress && ethBalance !== null) {
+                <div style="text-align: center; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px; width: 80%;">
+                  <h2 style="color:green; margin: 0; font-size: 28px;">
+                    {{ convertedBalance.symbol }} {{ convertedBalance.value }}
+                  </h2>
+                  <span style="color: gray; font-size: 16px;">{{ selectedFiatCurrency }}</span>
+                </div>
+            }
+            
+          </div>
+          
+          <!-- Refresh Button -->
+          @if (walletAddress) {
+            <button mat-stroked-button color="primary" (click)="fetchWalletBalance()" 
+                    style="margin-top: 15px; width: 80%;">
+              <mat-icon>refresh</mat-icon> Refresh Balance
+            </button>
+          }
+
+        </mat-card-content>
+      </mat-card>
 
 
       <!-- RECENT TRANSACTIONS -->

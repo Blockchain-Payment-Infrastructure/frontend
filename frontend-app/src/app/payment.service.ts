@@ -91,6 +91,10 @@ export class PaymentService {
     return this.http.get<PaymentTransaction>(endpoint);
   }
 
+  getExchangeRates(): Observable<any> {
+  const url = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd,inr,eur,gbp";
+  return this.http.get(url);
+}
   /**
    * Links to the backend endpoint: GET /wallet/addresses/{phone_number}
    */

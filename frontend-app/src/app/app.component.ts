@@ -1,12 +1,20 @@
-import { Component, ViewChild } from '@angular/core';
-// Removed RouterOutlet import as it's not used in the template's current structure
-// import { RouterOutlet } from '@angular/router'; 
-
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AuthResponse, WalletAddress } 
+  from "./payment.service";
 
-import { AuthResponse, WalletAddress } from "./payment.service";
-import { ethers } from 'ethers'; // RE-ADDED: Necessary for MetaMask transactions
-import { MatDialogModule } from '@angular/material/dialog'; // NEW: For modal/popup styling
+// Locally define the ExchangeRates type since it is not exported from payment.service.ts
+type ExchangeRates = {
+  ethereum: {
+    usd: number;
+    inr: number;
+    gbp: number;
+    eur: number;
+    [key: string]: number;
+  };
+};
+import { ethers } from 'ethers'; 
+import { MatDialogModule } from '@angular/material/dialog'; 
 
 // --- MATERIAL IMPORTS ---
 import { MatCardModule } from '@angular/material/card';
@@ -18,13 +26,14 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatRadioModule } from '@angular/material/radio';
-import { MatSelectModule } from '@angular/material/select';
+import { MatSelectModule } from '@angular/material/select'; // Added MatSelectModule
 
 // --- API SERVICE IMPORTS ---
 import { HttpClientModule } from '@angular/common/http';
 import { PaymentService } from './payment.service';
 import { catchError } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
+import { DecimalPipe } from '@angular/common'; // NEW: For number pipe in HTML
 
 // Define expected data structure
 type TransactionDetails = { txHash: string, status: string, amount: number } | null;
@@ -33,7 +42,6 @@ type TransactionDetails = { txHash: string, status: string, amount: number } | n
   selector: 'app-root',
   standalone: true,
   imports: [
-    // Removed RouterOutlet
     FormsModule,
     HttpClientModule,
     MatCardModule,
@@ -44,16 +52,17 @@ type TransactionDetails = { txHash: string, status: string, amount: number } | n
     MatToolbarModule,
     MatProgressBarModule,
     MatRadioModule,
-    MatSelectModule,
+    MatSelectModule, // Imported MatSelectModule
     MatTableModule,
-    MatDialogModule // Added MatDialogModule for modal background/structure
+    MatDialogModule,
+    DecimalPipe // Imported DecimalPipe
   ],
   providers: [PaymentService],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
 
-export class AppComponent {
+export class AppComponent implements OnInit { // MODIFIED: Added OnInit
   title = 'demo';
 
   @ViewChild('tabGroup') tabGroup!: MatTabGroup;
@@ -71,12 +80,23 @@ export class AppComponent {
   walletAddress: string | null = null;
   showAddressBox: boolean = false;
   
+  // NEW: BALANCE AND CURRENCY STATE
+  ethBalance: number | null = null;
+  exchangeRates: ExchangeRates | null = null;
+  selectedFiatCurrency: 'USD' | 'INR' | 'GBP' | 'EUR' = 'USD';
+  fiatCurrencies: { code: 'USD' | 'INR' | 'GBP' | 'EUR', symbol: string }[] = [
+    { code: 'USD', symbol: '$' },
+    { code: 'INR', symbol: '₹' },
+    { code: 'GBP', symbol: '£' },
+    { code: 'EUR', symbol: '€' },
+  ];
+  
   // FIXED: Missing property declarations for Payment Modal Form
-  showPaymentModal: boolean = false; // Fixes TS2339 for showPaymentModal
-  recipientAddress: string | null = null; // Fixes TS2339 for recipientAddress
-  paymentAmount: number | null = null;    // Fixes TS2339 for paymentAmount
-  paymentDescription: string = ''; // Fixes TS2339 for paymentDescription
-  isProcessingPayment: boolean = false; // Fixes TS2339 for isProcessingPayment
+  showPaymentModal: boolean = false; 
+  recipientAddress: string | null = null; 
+  paymentAmount: number | null = null;    
+  paymentDescription: string = ''; 
+  isProcessingPayment: boolean = false; 
 
   // State for Phone Number Search
   searchPhoneNumber: string = '';
@@ -90,6 +110,11 @@ export class AppComponent {
   isAuthenticating: boolean = false;
 
   constructor(private paymentService: PaymentService) { }
+
+  // NEW: Angular Lifecycle Hook to load rates on start
+  ngOnInit() {
+    this.fetchExchangeRates();
+  }
   
   private getAccessToken(): string | null {
     return this.userAccessToken;
@@ -101,6 +126,87 @@ export class AppComponent {
     }
     return new ethers.BrowserProvider((window as any).ethereum);
   }
+
+  // NEW: Getter to calculate the converted value and symbol
+  get convertedBalance(): { value: string, symbol: string } {
+    if (this.ethBalance === null || !this.exchangeRates) {
+      return { value: 'N/A', symbol: '' };
+    }
+    
+    const rate = this.exchangeRates.ethereum[this.selectedFiatCurrency.toLowerCase() as keyof ExchangeRates['ethereum']];
+    if (!rate) {
+      return { value: 'N/A', symbol: '' };
+    }
+
+    const symbol = this.fiatCurrencies.find(c => c.code === this.selectedFiatCurrency)?.symbol || '';
+    const convertedValue = (this.ethBalance * rate);
+    
+    // Format to 2 decimal places for fiat, using Intl.NumberFormat for locale-appropriate separators
+    const formattedValue = new Intl.NumberFormat('en-US', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    }).format(convertedValue);
+    
+    return { value: formattedValue, symbol: symbol };
+  }
+
+  // -------------------------------------------------------------------
+  // --- BALANCE & RATES METHODS ---
+  // -------------------------------------------------------------------
+  
+  // NEW: Method to fetch ETH Balance from the blockchain
+  async fetchWalletBalance() {
+    if (!this.walletAddress) {
+      this.ethBalance = null;
+      console.log('Wallet address is null, skipping balance fetch.');
+      return;
+    }
+
+    const provider = this.getProvider();
+    if (!provider) {
+      console.error('MetaMask provider not available for balance check.');
+      return;
+    }
+    
+    try {
+      // Get the balance in Wei (BigInt)
+      const balanceWei = await provider.getBalance(this.walletAddress); 
+      
+      // Convert from Wei to Ether (number)
+      const balanceEthString = ethers.formatEther(balanceWei);
+      this.ethBalance = parseFloat(balanceEthString);
+      
+      console.log(`ETH Balance fetched: ${this.ethBalance} ETH`);
+      
+    } catch (error) {
+      console.error('Failed to fetch ETH balance:', error);
+      this.ethBalance = null;
+    }
+  }
+  
+  // NEW: Method to fetch live exchange rates
+  fetchExchangeRates() {
+    this.paymentService.getExchangeRates().subscribe({
+      next: (rates: ExchangeRates) => {
+        this.exchangeRates = rates;
+        console.log('Exchange rates fetched:', rates);
+      },
+      error: (err) => {
+        console.error('Failed to fetch exchange rates:', err);
+        // Fallback hardcoded rates if API fails
+        this.exchangeRates = {
+          ethereum: {
+            usd: 3000,
+            inr: 250000,
+            gbp: 2400,
+            eur: 2800,
+          }
+        } as ExchangeRates;
+        alert('Warning: Could not fetch live exchange rates. Using approximate fallback rates.');
+      }
+    });
+  }
+
 
   // -------------------------------------------------------------------
   // --- UI/MODAL METHODS ---
@@ -120,7 +226,7 @@ export class AppComponent {
   }
 
   // FIXED: Missing method declaration for closePaymentModal
-  closePaymentModal() { // Fixes TS2339 for closePaymentModal
+  closePaymentModal() { 
     this.showPaymentModal = false;
     this.isProcessingPayment = false;
   }
@@ -130,7 +236,7 @@ export class AppComponent {
   // -------------------------------------------------------------------
 
   // FIXED: Missing method declaration for sendPayment
-  async sendPayment() { // Fixes TS2339 for sendPayment
+  async sendPayment() { 
     if (!this.walletAddress) {
       alert('Wallet not connected. Please connect MetaMask.');
       return;
@@ -192,11 +298,13 @@ export class AppComponent {
           alert(`Success! Payment recorded by backend.`);
           this.closePaymentModal();
           // NOTE: You would typically refresh transaction history here.
+          this.fetchWalletBalance(); // Refresh balance after successful payment
         },
         error: (err) => {
           console.error('Backend recording failed:', err);
           alert('Transaction was successful on the blockchain, but failed to record on the backend.');
           this.closePaymentModal();
+          this.fetchWalletBalance(); // Refresh balance anyway
         }
       });
       
@@ -292,7 +400,7 @@ export class AppComponent {
     });
   }
   
-  // Wallet Connect (Updated for Signature Verification)
+  // Wallet Connect (Updated for Signature Verification and Balance Fetch)
   async connectMetamask() {
     this.showAddressBox = false;
     const provider = this.getProvider();
@@ -329,9 +437,14 @@ export class AppComponent {
           this.walletAddress = address;
           console.log('Backend Wallet Association SUCCESSFUL. Connected Address:', response.walletAddress);
           alert(`Wallet Connected and Verified! Address: ${response.walletAddress}`);
+          
+          // NEW: Fetch the actual balance upon successful connection
+          this.fetchWalletBalance();
+          
         },
         error: (error) => {
           this.walletAddress = null;
+          this.ethBalance = null; // Clear balance on failed connection
           console.error('Wallet Verification Failed:', error);
           if (error.status === 401) {
             alert('Verification Failed: Session expired. Please log in again.');
@@ -346,6 +459,7 @@ export class AppComponent {
     } catch (error: any) {
       console.error('Wallet connection or signing rejected/failed:', error);
       this.walletAddress = null;
+      this.ethBalance = null; // Clear balance on user rejection
       if (error.code === 4001) {
         alert('Connection/Signing rejected by user.');
       } else {
@@ -430,9 +544,11 @@ export class AppComponent {
   
   goToMetamaskSite() { window.open('https://metamask.io/download/', '_blank'); }
 
+  // MODIFIED: Clear balance on disconnect
   disconnectMetamask() {
     this.walletAddress = null;
     this.showAddressBox = false;
+    this.ethBalance = null;
     console.error('Wallet disconnected!');
   }
 
