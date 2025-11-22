@@ -32,7 +32,7 @@
 }
 
 interface UpdateEmailPayload {
-  email: string;
+  new_email: string;
   password: string;
 }
 
@@ -171,7 +171,7 @@ interface AccountActionResponse {
   return this.http.patch('api/account/change-password', payload, { headers });
 }
 
-updateEmail(payload: { email: string, password: string }, token: string | null) {
+updateEmail(payload: { new_email: string, password: string }, token: string | null) {
   if (!token) return throwError(() => new Error('Missing token'));
   const headers = { 'Authorization': `Bearer ${token}` };
   return this.http.patch('api/account/update-email', payload, { headers });

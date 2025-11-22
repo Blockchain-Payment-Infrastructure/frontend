@@ -233,17 +233,22 @@ accountPassForDelete: string = '';
     });
   }
 openChangePasswordForm() { 
-  this.showChangePasswordForm = true; 
+  // Toggle its own visibility, and ensure others are closed
+  this.showChangePasswordForm = !this.showChangePasswordForm; 
   this.showUpdateEmailForm = false; 
   this.showDeleteAccountForm = false; 
 }
+
 openUpdateEmailForm() { 
-  this.showUpdateEmailForm = true; 
+  // Toggle its own visibility, and ensure others are closed
+  this.showUpdateEmailForm = !this.showUpdateEmailForm; 
   this.showChangePasswordForm = false; 
   this.showDeleteAccountForm = false; 
 }
+
 openDeleteAccountForm() { 
-  this.showDeleteAccountForm = true; 
+  // Toggle its own visibility, and ensure others are closed
+  this.showDeleteAccountForm = !this.showDeleteAccountForm; 
   this.showChangePasswordForm = false; 
   this.showUpdateEmailForm = false; 
 }
@@ -273,7 +278,7 @@ submitUpdateEmail() {
   }
 
   const token = this.getAccessToken();
-  this.paymentService.updateEmail({ email: this.newEmail, password: this.accountPassForEmail }, token)
+  this.paymentService.updateEmail({ new_email: this.newEmail, password: this.accountPassForEmail }, token)
     .subscribe({
       next: () => {
         alert('Email updated successfully');
@@ -417,7 +422,8 @@ submitDeleteAccount() {
       this.recentTransactions = (response.payments || []).map((tx: any) => {
       return {
         ...tx,
-        amount: parseFloat(tx.amount) / 1e18 // divide by 10^18 here
+        amount: tx.amount ? ethers.formatEther(tx.amount) : '0',
+         // divide by 10^18 here
       };
     }).slice(0, 5);
       this.recentTransactions = txArray.slice(0, 5);
@@ -746,8 +752,6 @@ submitDeleteAccount() {
     this.recentTransactions = []; 
     this.persistWalletAddress(null);
     console.error('Wallet disconnected!');
-    
-    // --- NEW: Alert on successful disconnect ---
     alert('Wallet disconnected successfully!');
   }
 
